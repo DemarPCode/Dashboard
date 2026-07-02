@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>Mathematics · Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lock.js" defer></script>
+<script src="sync.js" defer></script>
+<script src="topbar.js" defer></script>
+
+<style>
+:root {
+  --text-primary: #FAFAFA;
+  --text-secondary: #B8B6B0;
+  --text-tertiary: #76746E;
+  --success: #6BE3A4;
+  --warning: #F2C063;
+  --danger:  #FF6B6B;
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: #050506;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  padding: max(28px, env(safe-area-inset-top)) 20px 60px;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(circle at 82% 14%, rgba(224, 118, 88, 0.16), transparent 45%),
+    radial-gradient(circle at 18% 90%, rgba(180, 180, 200, 0.06), transparent 50%);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: -2;
+  animation: drift 36s ease-in-out infinite alternate;
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
+  background-size: 3px 3px;
+  pointer-events: none;
+  z-index: -1;
+}
+@keyframes drift {
+  0%   { transform: translate3d(0,0,0); }
+  100% { transform: translate3d(-22px, 14px, 0); }
+}
+
+.page { max-width: 1100px; margin: 0 auto; }
+
+.dash-title {
+  margin: 0 0 14px;
+  font-size: 28px; font-weight: 700;
+  letter-spacing: -0.025em;
+  background: linear-gradient(180deg, #FFFFFF 0%, #C7C4BC 120%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+@media (max-width: 480px) { .dash-title { font-size: 22px; } }
+
+.section { margin-top: 8px; }
+.section-title {
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-tertiary);
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 12px;
+}
+.section-title::before {
+  content: ''; width: 18px; height: 1px;
+  background: var(--text-tertiary); opacity: 0.6;
+}
+.section-title::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.08), transparent);
+}
+
+.gm-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+  overflow: hidden;
+}
+
+.gm-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px; margin-bottom: 14px;
+}
+.gm-header-left { display: flex; flex-direction: column; }
+.gm-eyebrow {
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-tertiary); margin-bottom: 6px;
+}
+.gm-progress-row { display: flex; align-items: baseline; gap: 6px; }
+.gm-progress-num {
+  font-size: 42px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.045em; color: var(--text-primary); line-height: 1;
+}
+.gm-progress-total { font-family: var(--font-mono); font-size: 18px; color: var(--text-tertiary); }
+.gm-progress-label {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  color: var(--text-tertiary); margin-left: 4px;
+}
+
+.gm-streak {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 12px; border-radius: 999px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: var(--text-tertiary);
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  transition: background 0.25s, color 0.25s, border-color 0.25s;
+}
+.gm-streak-icon { font-size: 13px; }
+.gm-streak-num { font-family: var(--font-mono); font-weight: 700; font-variant-numeric: tabular-nums; }
+.gm-streak.gm-streak-active {
+  background: rgba(242,192,99,0.10);
+  color: #F2C063;
+  border-color: rgba(242,192,99,0.32);
+}
+.gm-streak.gm-streak-active .gm-streak-icon { filter: drop-shadow(0 0 6px rgba(242,192,99,0.6)); }
+
+.gm-bar { display: flex; gap: 4px; height: 6px; margin-bottom: 14px; }
+.gm-bar:empty { display: none; }
+.gm-bar-seg {
+  flex: 1; background: rgba(255,255,255,0.06);
+  border-radius: 3px; transition: background 0.3s, box-shadow 0.3s;
+}
+.gm-bar-seg-done { background: var(--success); box-shadow: 0 0 6px rgba(107,227,164,0.40); }
+
+.week-target-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; color: var(--text-tertiary);
+}
+.week-target-row input {
+  width: 56px;
+  padding: 6px 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px; background: rgba(0,0,0,0.28);
+  color: var(--text-primary); font-family: inherit; font-size: 12px;
+  outline: none;
+}
+.week-target-row input:focus { border-color: rgba(255,255,255,0.28); }
+
+/* Topics */
+.topic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.topic-card {
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 14px;
+}
+.topic-card-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 8px; margin-bottom: 10px;
+}
+.topic-name {
+  flex: 1; font-size: 14px; font-weight: 600;
+  color: var(--text-primary); outline: none;
+  border-radius: 4px; padding: 1px 3px; margin: -1px -3px;
+}
+.topic-name[contenteditable="true"] {
+  outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.28);
+}
+.topic-mastery-track {
+  height: 6px; background: rgba(255,255,255,0.06);
+  border-radius: 999px; overflow: hidden; margin-bottom: 8px;
+}
+.topic-mastery-fill {
+  height: 100%; border-radius: 999px;
+  transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s;
+}
+.topic-mastery-fill.low    { background: var(--danger); }
+.topic-mastery-fill.mid    { background: var(--warning); }
+.topic-mastery-fill.high   { background: var(--success); }
+.topic-mastery-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.topic-mastery-pct {
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  color: var(--text-primary); font-variant-numeric: tabular-nums;
+}
+.topic-mastery-controls { display: flex; gap: 6px; }
+.topic-mastery-btn {
+  width: 24px; height: 24px; border-radius: 7px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-primary); font-family: inherit; font-size: 13px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.topic-mastery-btn:hover { background: rgba(255,255,255,0.09); }
+.topic-note {
+  font-size: 12px; color: var(--text-tertiary);
+  outline: none; min-height: 15px; border-radius: 4px; padding: 1px 3px; margin: 0 -3px;
+}
+.topic-note[contenteditable="true"] {
+  outline: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.22); color: var(--text-secondary);
+}
+.topic-note:empty::before { content: 'add a note…'; color: var(--text-tertiary); opacity: 0.6; font-style: italic; }
+.topic-delete {
+  border: 0; background: transparent; color: var(--text-tertiary);
+  font-size: 16px; cursor: pointer; padding: 0 2px; line-height: 1;
+  opacity: 0.5; transition: opacity 0.2s, color 0.2s; flex-shrink: 0;
+}
+.topic-card:hover .topic-delete { opacity: 1; }
+.topic-delete:hover { color: var(--danger); }
+
+/* Shared list rows */
+.goal-list { list-style: none; margin: 0; padding: 0; }
+.empty-state {
+  text-align: center; font-size: 12px; font-style: italic;
+  color: var(--text-tertiary); padding: 14px 0;
+}
+.gm-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; margin-bottom: 6px;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  transition: background 0.2s, opacity 0.3s;
+}
+.gm-row:hover { background: rgba(255,255,255,0.06); }
+.gm-row.gm-row-done { opacity: 0.45; background: rgba(107,227,164,0.04); }
+.gm-row.gm-row-done .gm-text { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4); }
+.gm-check {
+  appearance: none; -webkit-appearance: none;
+  width: 22px; height: 22px; flex-shrink: 0; margin: 0;
+  border: 1.5px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.28); border-radius: 7px;
+  position: relative; cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.25s;
+}
+.gm-check:checked { background: var(--success); border-color: var(--success); box-shadow: 0 0 12px rgba(107,227,164,0.40); }
+.gm-check:checked::after {
+  content: ''; position: absolute; left: 6px; top: 2px;
+  width: 6px; height: 11px;
+  border: solid #0A0A0B; border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+}
+.gm-text {
+  flex: 1; font-size: 14px; color: var(--text-primary);
+  outline: none; border-radius: 4px; padding: 2px 4px; margin: -2px -4px;
+}
+.gm-text[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.28); }
+.gm-log-meta {
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--text-tertiary); white-space: nowrap; flex-shrink: 0;
+}
+.goal-delete {
+  border: 0; background: transparent; color: var(--text-tertiary);
+  font-size: 18px; cursor: pointer; padding: 0 4px;
+  opacity: 0.5; transition: opacity 0.2s, color 0.2s;
+}
+.gm-row:hover .goal-delete { opacity: 1; }
+.goal-delete:hover { color: var(--danger); }
+
+.gm-input-wrap {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  margin-top: 14px; padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.gm-input, select.gm-input {
+  flex: 1; min-width: 0;
+  padding: 11px 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px; background: rgba(0,0,0,0.28);
+  color: var(--text-primary);
+  font-family: inherit; font-size: 14px; outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.gm-input::placeholder { color: var(--text-tertiary); }
+.gm-input:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
+
+.gm-add {
+  padding: 11px 20px; border: 0; border-radius: 12px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+  color: #0A0A0B; font-family: inherit; font-size: 13px; font-weight: 700;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.9),
+    0 2px 8px rgba(0,0,0,0.35),
+    0 8px 22px rgba(0,0,0,0.25);
+  transition: transform 0.1s, filter 0.15s;
+}
+.gm-add:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.gm-add:active { transform: translateY(0); }
+
+/* Grade trend chart — same visual system as the finance net-worth chart */
+.mt-chart-wrap {
+  margin-bottom: 18px;
+  padding: 14px 16px 12px;
+  background: rgba(255, 255, 255, 0.025);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.mt-chart-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px;
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+.mt-chart-label { color: var(--text-tertiary); }
+.mt-chart-delta { font-variant-numeric: tabular-nums; color: var(--text-tertiary); }
+.mt-chart-delta.up   { color: var(--success); }
+.mt-chart-delta.down { color: #FF8A8A; }
+.mt-chart-svg {
+  display: block; width: 100%; height: 180px;
+  color: var(--text-tertiary); overflow: visible;
+  transition: color 0.4s ease;
+}
+.mt-chart-grid { stroke: rgba(255,255,255,0.05); stroke-width: 1; stroke-dasharray: 2 4; vector-effect: non-scaling-stroke; }
+.mt-chart-empty {
+  position: absolute; inset: 28px 16px 12px;
+  font-size: 11px; color: var(--text-tertiary);
+  text-align: center; font-style: italic;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.mt-chart-wrap.has-data .mt-chart-empty { display: none; }
+.mt-chart-stats {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 6px; margin-top: 12px; padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+@media (max-width: 720px) { .mt-chart-stats { grid-template-columns: repeat(2, 1fr); } }
+.mt-stat { display: flex; flex-direction: column; gap: 2px; padding: 4px 6px; }
+.mt-stat-label { font-size: 9px; letter-spacing: 0.12em; font-weight: 800; text-transform: uppercase; color: var(--text-tertiary); }
+.mt-stat-val { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 480px) {
+  body { padding: max(20px, env(safe-area-inset-top)) 14px 50px; }
+  .gm-card { padding: 16px; }
+  .gm-progress-num { font-size: 36px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1 class="dash-title">Mathematics</h1>
+
+  <!-- ===== This Week: streak + weekly practice goal ===== -->
+  <div class="section">
+    <div class="section-title">This Week</div>
+    <div class="gm-card">
+      <div class="gm-header">
+        <div class="gm-header-left">
+          <div class="gm-eyebrow">Practice Sessions</div>
+          <div class="gm-progress-row">
+            <span class="gm-progress-num" id="weekNum">0</span>
+            <span class="gm-progress-total" id="weekTotal">/ 3</span>
+            <span class="gm-progress-label">this week</span>
+          </div>
+        </div>
+        <div class="gm-streak" id="mathStreak">
+          <span class="gm-streak-icon">🔥</span>
+          <span class="gm-streak-num" id="mathStreakNum">0</span>
+          <span>day streak</span>
+        </div>
+      </div>
+      <div class="gm-bar" id="weekBar"></div>
+      <div class="week-target-row">
+        <label for="weekTargetInput">Weekly target</label>
+        <input type="number" id="weekTargetInput" min="1" max="14" step="1">
+        <span>sessions</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Topics: mastery per topic ===== -->
+  <div class="section">
+    <div class="section-title">Topics</div>
+    <div class="gm-card">
+      <div class="topic-grid" id="topicGrid"></div>
+      <div id="topicEmpty" class="empty-state">No topics yet — add what you're studying below.</div>
+      <div class="gm-input-wrap">
+        <input class="gm-input" id="topicInput" type="text" placeholder="Add a topic (e.g. Quadratic equations)…" autocomplete="off">
+        <button class="gm-add" id="topicAdd" type="button">+ Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Practice Log ===== -->
+  <div class="section">
+    <div class="section-title">Practice Log</div>
+    <div class="gm-card">
+      <ul class="goal-list" id="practiceList"></ul>
+      <div id="practiceEmpty" class="empty-state">No sessions logged yet.</div>
+      <div class="gm-input-wrap">
+        <select class="gm-input" id="practiceTopic" style="flex:1 1 140px;"></select>
+        <input class="gm-input" id="practiceMinutes" type="number" min="1" placeholder="Minutes" style="flex:0 1 90px;">
+        <input class="gm-input" id="practiceCorrect" type="number" min="0" placeholder="Correct" style="flex:0 1 90px;">
+        <input class="gm-input" id="practiceAttempted" type="number" min="0" placeholder="Attempted" style="flex:0 1 100px;">
+        <button class="gm-add" id="practiceAdd" type="button">+ Log</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Test & Quiz Scores ===== -->
+  <div class="section">
+    <div class="section-title">Test &amp; Quiz Scores</div>
+    <div class="gm-card">
+      <div class="mt-chart-wrap" id="mtChartWrap">
+        <div class="mt-chart-head">
+          <span class="mt-chart-label">Grade trend</span>
+          <span class="mt-chart-delta" id="mtChartDelta">—</span>
+        </div>
+        <svg class="mt-chart-svg" id="mtChartSvg" viewBox="0 0 600 180" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="mtChartGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stop-color="currentColor" stop-opacity="0.55"/>
+              <stop offset="60%"  stop-color="currentColor" stop-opacity="0.18"/>
+              <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <line class="mt-chart-grid" x1="0" x2="600" y1="36"  y2="36"/>
+          <line class="mt-chart-grid" x1="0" x2="600" y1="90"  y2="90"/>
+          <line class="mt-chart-grid" x1="0" x2="600" y1="144" y2="144"/>
+          <path id="mtChartArea" fill="url(#mtChartGrad)" d=""/>
+          <path id="mtChartLine" fill="none" stroke="currentColor" stroke-width="2.4"
+                stroke-linejoin="round" stroke-linecap="round"
+                style="filter: drop-shadow(0 0 6px currentColor)" d=""/>
+        </svg>
+        <div class="mt-chart-empty" id="mtChartEmpty">Log a test score to start tracking your grade trend.</div>
+        <div class="mt-chart-stats" id="mtChartStats">
+          <div class="mt-stat"><div class="mt-stat-label">Average</div><div class="mt-stat-val" id="mtStatAvg">—</div></div>
+          <div class="mt-stat"><div class="mt-stat-label">Highest</div><div class="mt-stat-val" id="mtStatHigh">—</div></div>
+          <div class="mt-stat"><div class="mt-stat-label">Lowest</div><div class="mt-stat-val" id="mtStatLow">—</div></div>
+          <div class="mt-stat"><div class="mt-stat-label">Tests logged</div><div class="mt-stat-val" id="mtStatCount">—</div></div>
+        </div>
+      </div>
+
+      <ul class="goal-list" id="testList"></ul>
+      <div id="testEmpty" class="empty-state">No tests logged yet.</div>
+      <div class="gm-input-wrap">
+        <input class="gm-input" id="testUnit" type="text" placeholder="Topic / unit (e.g. Chapter 4 test)" style="flex:1 1 180px;" autocomplete="off">
+        <select class="gm-input" id="testGrade" style="flex:0 1 90px;"></select>
+        <button class="gm-add" id="testAdd" type="button">+ Log</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Weak Spots / Review Queue ===== -->
+  <div class="section">
+    <div class="section-title">Weak Spots</div>
+    <div class="gm-card">
+      <ul class="goal-list" id="reviewList"></ul>
+      <div id="reviewEmpty" class="empty-state">Nothing flagged — nice.</div>
+      <div class="gm-input-wrap">
+        <input class="gm-input" id="reviewInput" type="text" placeholder="What tripped you up? (e.g. sign errors in equations)…" autocomplete="off">
+        <button class="gm-add" id="reviewAdd" type="button">+ Add</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.page -->
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------- storage keys ----------
+  const K_TOPICS   = 'math:topics';
+  const K_PRACTICE = 'math:practice';
+  const K_TESTS    = 'math:tests';
+  const K_REVIEW   = 'math:review';
+  const K_TARGET   = 'math:weekly_target';
+
+  const GRADES = [
+    { v: -3, l: '-3' },
+    { v: 0,  l: '00' },
+    { v: 2,  l: '02' },
+    { v: 4,  l: '4'  },
+    { v: 7,  l: '7'  },
+    { v: 10, l: '10' },
+    { v: 12, l: '12' }
+  ];
+
+  // ---------- storage helpers ----------
+  function load(key, fallback) {
+    try {
+      const v = JSON.parse(localStorage.getItem(key));
+      return v == null ? fallback : v;
+    } catch (e) { return fallback; }
+  }
+  function save(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+
+  function uid() { return 'm' + Date.now() + '_' + Math.floor(Math.random() * 999); }
+
+  // ---------- date helpers ----------
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function dateKey(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  function todayKey() { return dateKey(new Date()); }
+  function fmtShortDate(yyyy_mm_dd) {
+    const parts = yyyy_mm_dd.split('-').map(Number);
+    const d = new Date(parts[0], parts[1] - 1, parts[2]);
+    const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+    return mo + ' ' + d.getDate();
+  }
+
+  // =========================================================
+  // THIS WEEK — streak + weekly session count
+  // =========================================================
+  function practiceDateSet() {
+    const list = load(K_PRACTICE, []);
+    return new Set(list.map(p => p.date));
+  }
+  function computeStreak(dateSet) {
+    let streak = 0;
+    const cursor = new Date();
+    if (!dateSet.has(dateKey(cursor))) cursor.setDate(cursor.getDate() - 1);
+    while (dateSet.has(dateKey(cursor))) {
+      streak++;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return streak;
+  }
+  function computeWeekCount(dateSet) {
+    let count = 0;
+    const base = new Date();
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(base);
+      d.setDate(base.getDate() - i);
+      if (dateSet.has(dateKey(d))) count++;
+    }
+    return count;
+  }
+  function renderWeek() {
+    const dateSet = practiceDateSet();
+    const target = Math.max(1, Number(load(K_TARGET, 3)) || 3);
+    const weekCount = computeWeekCount(dateSet);
+    const streak = computeStreak(dateSet);
+
+    document.getElementById('weekNum').textContent = weekCount;
+    document.getElementById('weekTotal').textContent = '/ ' + target;
+    document.getElementById('mathStreakNum').textContent = streak;
+    document.getElementById('mathStreak').classList.toggle('gm-streak-active', streak > 0);
+
+    const bar = document.getElementById('weekBar');
+    bar.innerHTML = '';
+    for (let i = 0; i < target; i++) {
+      const seg = document.createElement('div');
+      seg.className = 'gm-bar-seg' + (i < weekCount ? ' gm-bar-seg-done' : '');
+      bar.appendChild(seg);
+    }
+
+    const targetInput = document.getElementById('weekTargetInput');
+    if (document.activeElement !== targetInput) targetInput.value = target;
+  }
+  const weekTargetInput = document.getElementById('weekTargetInput');
+  weekTargetInput.addEventListener('change', () => {
+    const v = Math.max(1, Math.min(14, Number(weekTargetInput.value) || 3));
+    save(K_TARGET, v);
+    renderWeek();
+  });
+
+  // =========================================================
+  // TOPICS
+  // =========================================================
+  function masteryClass(pct) {
+    if (pct < 34) return 'low';
+    if (pct < 67) return 'mid';
+    return 'high';
+  }
+  function renderTopics() {
+    const topics = load(K_TOPICS, []);
+    const grid = document.getElementById('topicGrid');
+    const empty = document.getElementById('topicEmpty');
+    grid.innerHTML = '';
+    empty.style.display = topics.length === 0 ? 'block' : 'none';
+
+    topics.forEach((t, i) => {
+      const card = document.createElement('div');
+      card.className = 'topic-card';
+
+      const head = document.createElement('div');
+      head.className = 'topic-card-head';
+
+      const name = document.createElement('div');
+      name.className = 'topic-name';
+      name.textContent = t.name;
+      name.contentEditable = 'true';
+      name.addEventListener('blur', () => {
+        const next = name.textContent.trim();
+        const list = load(K_TOPICS, []);
+        if (list[i]) { list[i].name = next || list[i].name; save(K_TOPICS, list); }
+        renderPracticeTopicOptions();
+      });
+      name.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); name.blur(); } });
+
+      const del = document.createElement('button');
+      del.className = 'topic-delete';
+      del.type = 'button';
+      del.setAttribute('aria-label', 'Delete topic');
+      del.textContent = '×';
+      del.addEventListener('click', () => {
+        const list = load(K_TOPICS, []);
+        list.splice(i, 1);
+        save(K_TOPICS, list);
+        renderTopics();
+        renderPracticeTopicOptions();
+      });
+
+      head.appendChild(name);
+      head.appendChild(del);
+
+      const track = document.createElement('div');
+      track.className = 'topic-mastery-track';
+      const fill = document.createElement('div');
+      fill.className = 'topic-mastery-fill ' + masteryClass(t.mastery || 0);
+      fill.style.width = (t.mastery || 0) + '%';
+      track.appendChild(fill);
+
+      const row = document.createElement('div');
+      row.className = 'topic-mastery-row';
+      const pctEl = document.createElement('span');
+      pctEl.className = 'topic-mastery-pct';
+      pctEl.textContent = (t.mastery || 0) + '%';
+      const controls = document.createElement('div');
+      controls.className = 'topic-mastery-controls';
+      const minus = document.createElement('button');
+      minus.type = 'button'; minus.className = 'topic-mastery-btn'; minus.textContent = '−';
+      const plus = document.createElement('button');
+      plus.type = 'button'; plus.className = 'topic-mastery-btn'; plus.textContent = '+';
+      function adjust(delta) {
+        const list = load(K_TOPICS, []);
+        if (!list[i]) return;
+        list[i].mastery = Math.max(0, Math.min(100, (list[i].mastery || 0) + delta));
+        save(K_TOPICS, list);
+        renderTopics();
+      }
+      minus.addEventListener('click', () => adjust(-10));
+      plus.addEventListener('click', () => adjust(10));
+      controls.appendChild(minus);
+      controls.appendChild(plus);
+      row.appendChild(pctEl);
+      row.appendChild(controls);
+
+      const note = document.createElement('div');
+      note.className = 'topic-note';
+      note.textContent = t.note || '';
+      note.contentEditable = 'true';
+      note.addEventListener('blur', () => {
+        const list = load(K_TOPICS, []);
+        if (list[i]) { list[i].note = note.textContent.trim(); save(K_TOPICS, list); }
+      });
+      note.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); note.blur(); } });
+
+      card.appendChild(head);
+      card.appendChild(track);
+      card.appendChild(row);
+      card.appendChild(note);
+      grid.appendChild(card);
+    });
+  }
+  document.getElementById('topicAdd').addEventListener('click', () => {
+    const input = document.getElementById('topicInput');
+    const name = input.value.trim();
+    if (!name) return;
+    const list = load(K_TOPICS, []);
+    list.push({ id: uid(), name, mastery: 0, note: '' });
+    save(K_TOPICS, list);
+    input.value = '';
+    renderTopics();
+    renderPracticeTopicOptions();
+  });
+  document.getElementById('topicInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('topicAdd').click();
+  });
+
+  // =========================================================
+  // PRACTICE LOG
+  // =========================================================
+  function renderPracticeTopicOptions() {
+    const sel = document.getElementById('practiceTopic');
+    const topics = load(K_TOPICS, []);
+    const prevVal = sel.value;
+    sel.innerHTML = '';
+    if (topics.length === 0) {
+      const opt = document.createElement('option');
+      opt.value = ''; opt.textContent = 'Add a topic first';
+      sel.appendChild(opt);
+      sel.disabled = true;
+      return;
+    }
+    sel.disabled = false;
+    topics.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id; opt.textContent = t.name;
+      sel.appendChild(opt);
+    });
+    if (topics.some(t => t.id === prevVal)) sel.value = prevVal;
+  }
+  function topicName(id) {
+    const t = load(K_TOPICS, []).find(x => x.id === id);
+    return t ? t.name : 'Unknown topic';
+  }
+  function renderPractice() {
+    const list = load(K_PRACTICE, []).slice().sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    const ul = document.getElementById('practiceList');
+    const empty = document.getElementById('practiceEmpty');
+    ul.innerHTML = '';
+    empty.style.display = list.length === 0 ? 'block' : 'none';
+
+    list.forEach((p) => {
+      const li = document.createElement('li');
+      li.className = 'gm-row';
+
+      const text = document.createElement('span');
+      text.className = 'gm-text';
+      let acc = '';
+      if (p.attempted) acc = ' · ' + p.correct + '/' + p.attempted + ' correct';
+      text.textContent = topicName(p.topicId) + ' · ' + p.minutes + ' min' + acc;
+
+      const meta = document.createElement('span');
+      meta.className = 'gm-log-meta';
+      meta.textContent = fmtShortDate(p.date);
+
+      const del = document.createElement('button');
+      del.className = 'goal-delete'; del.type = 'button';
+      del.setAttribute('aria-label', 'Delete session');
+      del.textContent = '×';
+      del.addEventListener('click', () => {
+        const all = load(K_PRACTICE, []);
+        const idx = all.findIndex(x => x.id === p.id);
+        if (idx !== -1) { all.splice(idx, 1); save(K_PRACTICE, all); }
+        renderPractice(); renderWeek();
+      });
+
+      li.appendChild(text);
+      li.appendChild(meta);
+      li.appendChild(del);
+      ul.appendChild(li);
+    });
+  }
+  document.getElementById('practiceAdd').addEventListener('click', () => {
+    const topicSel = document.getElementById('practiceTopic');
+    const minutesEl = document.getElementById('practiceMinutes');
+    const correctEl = document.getElementById('practiceCorrect');
+    const attemptedEl = document.getElementById('practiceAttempted');
+    if (topicSel.disabled || !topicSel.value) { topicSel.focus(); return; }
+    const minutes = Math.max(1, Number(minutesEl.value) || 0);
+    if (!minutes) { minutesEl.focus(); return; }
+    const attempted = Math.max(0, Number(attemptedEl.value) || 0);
+    const correct = Math.max(0, Math.min(attempted || Infinity, Number(correctEl.value) || 0));
+    const list = load(K_PRACTICE, []);
+    list.push({
+      id: uid(), topicId: topicSel.value, minutes, correct, attempted,
+      date: todayKey(), ts: Date.now()
+    });
+    save(K_PRACTICE, list);
+    minutesEl.value = ''; correctEl.value = ''; attemptedEl.value = '';
+    renderPractice(); renderWeek();
+  });
+
+  // =========================================================
+  // TEST & QUIZ SCORES
+  // =========================================================
+  function fillGradeSelect() {
+    const sel = document.getElementById('testGrade');
+    sel.innerHTML = '';
+    GRADES.forEach(g => {
+      const opt = document.createElement('option');
+      opt.value = g.v; opt.textContent = g.l;
+      sel.appendChild(opt);
+    });
+    sel.value = '7';
+  }
+  function gradeLabel(v) {
+    const g = GRADES.find(x => x.v === v);
+    return g ? g.l : String(v);
+  }
+  function renderTests() {
+    const list = load(K_TESTS, []).slice().sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    const ul = document.getElementById('testList');
+    const empty = document.getElementById('testEmpty');
+    ul.innerHTML = '';
+    empty.style.display = list.length === 0 ? 'block' : 'none';
+
+    list.forEach((t) => {
+      const li = document.createElement('li');
+      li.className = 'gm-row';
+
+      const text = document.createElement('span');
+      text.className = 'gm-text';
+      text.textContent = (t.unit || 'Test') + ' · grade ' + gradeLabel(t.grade);
+
+      const meta = document.createElement('span');
+      meta.className = 'gm-log-meta';
+      meta.textContent = fmtShortDate(t.date);
+
+      const del = document.createElement('button');
+      del.className = 'goal-delete'; del.type = 'button';
+      del.setAttribute('aria-label', 'Delete test');
+      del.textContent = '×';
+      del.addEventListener('click', () => {
+        const all = load(K_TESTS, []);
+        const idx = all.findIndex(x => x.id === t.id);
+        if (idx !== -1) { all.splice(idx, 1); save(K_TESTS, all); }
+        renderTests(); renderChart();
+      });
+
+      li.appendChild(text);
+      li.appendChild(meta);
+      li.appendChild(del);
+      ul.appendChild(li);
+    });
+  }
+  document.getElementById('testAdd').addEventListener('click', () => {
+    const unitEl = document.getElementById('testUnit');
+    const gradeEl = document.getElementById('testGrade');
+    const unit = unitEl.value.trim();
+    const grade = Number(gradeEl.value);
+    const list = load(K_TESTS, []);
+    list.push({ id: uid(), unit, grade, date: todayKey(), ts: Date.now() });
+    save(K_TESTS, list);
+    unitEl.value = '';
+    renderTests(); renderChart();
+  });
+  document.getElementById('testUnit').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('testAdd').click();
+  });
+
+  // ---------- grade trend chart (same visual language as the finance chart) ----------
+  function chartSmoothPath(points) {
+    if (points.length < 2) return '';
+    let d = 'M' + points[0].x + ',' + points[0].y;
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[i], p1 = points[i + 1];
+      const midX = (p0.x + p1.x) / 2;
+      d += ' C' + midX + ',' + p0.y + ' ' + midX + ',' + p1.y + ' ' + p1.x + ',' + p1.y;
+    }
+    return d;
+  }
+  function renderChart() {
+    const wrap = document.getElementById('mtChartWrap');
+    const linePath = document.getElementById('mtChartLine');
+    const areaPath = document.getElementById('mtChartArea');
+    const deltaEl = document.getElementById('mtChartDelta');
+    const svg = document.getElementById('mtChartSvg');
+    const tests = load(K_TESTS, []).slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
+
+    document.getElementById('mtStatAvg').textContent = tests.length
+      ? (tests.reduce((s, t) => s + t.grade, 0) / tests.length).toFixed(1) : '—';
+    document.getElementById('mtStatHigh').textContent = tests.length
+      ? gradeLabel(Math.max.apply(null, tests.map(t => t.grade))) : '—';
+    document.getElementById('mtStatLow').textContent = tests.length
+      ? gradeLabel(Math.min.apply(null, tests.map(t => t.grade))) : '—';
+    document.getElementById('mtStatCount').textContent = tests.length || '—';
+
+    if (tests.length < 1) {
+      wrap.classList.remove('has-data');
+      linePath.setAttribute('d', ''); areaPath.setAttribute('d', '');
+      deltaEl.textContent = '—'; deltaEl.classList.remove('up', 'down');
+      return;
+    }
+    wrap.classList.add('has-data');
+
+    const first = tests[0].grade, last = tests[tests.length - 1].grade;
+    const change = last - first;
+    const direction = Math.abs(change) < 0.01 ? 'flat' : (change > 0 ? 'up' : 'down');
+    const color = direction === 'up' ? '#6BE3A4' : direction === 'down' ? '#FF8A8A' : 'var(--text-tertiary)';
+    svg.style.color = color;
+    deltaEl.classList.remove('up', 'down');
+    if (direction === 'up') deltaEl.classList.add('up');
+    if (direction === 'down') deltaEl.classList.add('down');
+    deltaEl.textContent = direction === 'flat' ? 'Flat' : (change > 0 ? '+' : '−') + Math.abs(change).toFixed(1);
+
+    const W = 600, H = 180, pad = 8;
+    const vals = tests.map(t => t.grade);
+    const minV = Math.min.apply(null, vals);
+    const maxV = Math.max.apply(null, vals);
+    const range = (maxV - minV) || Math.max(1, Math.abs(maxV));
+
+    if (tests.length === 1) {
+      const y = H / 2;
+      linePath.setAttribute('d', 'M0,' + y + ' L' + W + ',' + y);
+      areaPath.setAttribute('d', 'M0,' + y + ' L' + W + ',' + y + ' L' + W + ',' + H + ' L0,' + H + ' Z');
+      return;
+    }
+    const points = tests.map((t, i) => ({
+      x: (i / (tests.length - 1)) * W,
+      y: H - pad - ((t.grade - minV) / range) * (H - pad * 2)
+    }));
+    const lineD = chartSmoothPath(points);
+    linePath.setAttribute('d', lineD);
+    const lastPt = points[points.length - 1];
+    areaPath.setAttribute('d', lineD + ' L' + lastPt.x + ',' + H + ' L0,' + H + ' Z');
+  }
+
+  // =========================================================
+  // WEAK SPOTS / REVIEW QUEUE
+  // =========================================================
+  function renderReview() {
+    const list = load(K_REVIEW, []);
+    const ul = document.getElementById('reviewList');
+    const empty = document.getElementById('reviewEmpty');
+    ul.innerHTML = '';
+    empty.style.display = list.length === 0 ? 'block' : 'none';
+
+    list.forEach((item, i) => {
+      const li = document.createElement('li');
+      li.className = 'gm-row' + (item.done ? ' gm-row-done' : '');
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.className = 'gm-check'; cb.checked = !!item.done;
+      cb.addEventListener('change', () => {
+        const l = load(K_REVIEW, []);
+        if (l[i]) { l[i].done = cb.checked; save(K_REVIEW, l); }
+        renderReview();
+      });
+
+      const txt = document.createElement('div');
+      txt.className = 'gm-text'; txt.textContent = item.text;
+      txt.contentEditable = 'true';
+      txt.addEventListener('blur', () => {
+        const l = load(K_REVIEW, []);
+        if (l[i]) { l[i].text = txt.textContent.trim(); save(K_REVIEW, l); }
+      });
+      txt.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); txt.blur(); } });
+
+      const del = document.createElement('button');
+      del.className = 'goal-delete'; del.type = 'button';
+      del.setAttribute('aria-label', 'Delete');
+      del.textContent = '×';
+      del.addEventListener('click', () => {
+        const l = load(K_REVIEW, []);
+        l.splice(i, 1); save(K_REVIEW, l);
+        renderReview();
+      });
+
+      li.appendChild(cb); li.appendChild(txt); li.appendChild(del);
+      ul.appendChild(li);
+    });
+  }
+  document.getElementById('reviewAdd').addEventListener('click', () => {
+    const input = document.getElementById('reviewInput');
+    const text = input.value.trim();
+    if (!text) return;
+    const list = load(K_REVIEW, []);
+    list.push({ text, done: false });
+    save(K_REVIEW, list);
+    input.value = '';
+    renderReview();
+  });
+  document.getElementById('reviewInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('reviewAdd').click();
+  });
+
+  // =========================================================
+  // BOOT + CLOUD SYNC
+  // =========================================================
+  function renderAll() {
+    renderWeek();
+    renderTopics();
+    renderPracticeTopicOptions();
+    renderPractice();
+    renderTests();
+    renderChart();
+    renderReview();
+  }
+
+  fillGradeSelect();
+  renderAll();
+
+  window.addEventListener('storage', renderAll);
+
+  if (window.initCloudSync) {
+    window.initCloudSync({
+      appKey: 'math',
+      syncedPrefixes: ['math:'],
+      onApplied: renderAll
+    });
+  }
+})();
+</script>
+</body>
+</html>
