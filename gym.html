@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0b">
 <title>Progressive Overload Coach</title>
+<script src="lock.js" defer></script>
 <script src="topbar.js" defer></script>
 
 <!-- =============================================================
@@ -3449,6 +3450,7 @@ img, video, canvas, svg { max-width: 100%; }
 
   // Backup push on unload via fetch keepalive so a fast refresh
   // doesn't lose the latest change before the debounced push fires.
+  let pcAccessToken = null; // the logged-in user's JWT, required by the RLS policies
   function pcFlushPushOnUnload() {
     if (!pcSupa) return;
     const state = pcCollectState();
@@ -3459,7 +3461,7 @@ img, video, canvas, svg { max-width: 100%; }
         method: 'POST',
         headers: {
           'apikey': SUPABASE_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Authorization': 'Bearer ' + (pcAccessToken || SUPABASE_KEY),
           'Content-Type': 'application/json',
           'Prefer': 'resolution=merge-duplicates',
         },
@@ -3477,6 +3479,13 @@ img, video, canvas, svg { max-width: 100%; }
     // Skip if the placeholder values are still in place (local-only mode)
     if (SUPABASE_URL.indexOf('PASTE-') === 0 || SUPABASE_KEY.indexOf('PASTE-') === 0) return;
     pcSupa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    try {
+      const { data: pcSess } = await pcSupa.auth.getSession();
+      pcAccessToken = pcSess && pcSess.session ? pcSess.session.access_token : null;
+      pcSupa.auth.onAuthStateChange((_evt, session) => {
+        pcAccessToken = session ? session.access_token : null;
+      });
+    } catch (_) {}
     try {
       const { data, error } = await pcSupa
         .from('app_state').select('data').eq('key', APP_KEY).maybeSingle();

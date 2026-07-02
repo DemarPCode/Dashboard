@@ -5,8 +5,8 @@
 // =============================================================
 (function () {
   'use strict';
-  const SUPABASE_URL = 'PASTE-YOUR-SUPABASE-PROJECT-URL-HERE';
-  const SUPABASE_KEY = 'PASTE-YOUR-SUPABASE-PUBLISHABLE-KEY-HERE';
+  const SUPABASE_URL = 'https://ttjtfpigiowhncopcios.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_-YJi8miADCT5dCcNQg_Ukg_8s6-G92U';
 
   window.initCloudSync = function (config) {
     const appKey = config && config.appKey;
@@ -86,6 +86,7 @@
       } catch (e) {}
     }
     function schedulePush() { clearTimeout(pushTimer); pushTimer = setTimeout(pushNow, 250); }
+    let accessToken = null; // the logged-in user's JWT, required by the RLS policies
     function flushOnUnload() {
       const state = collect();
       const json = JSON.stringify(state);
@@ -95,7 +96,7 @@
           method: 'POST',
           headers: {
             'apikey': SUPABASE_KEY,
-            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Authorization': 'Bearer ' + (accessToken || SUPABASE_KEY),
             'Content-Type': 'application/json',
             'Prefer': 'resolution=merge-duplicates',
           },
@@ -107,6 +108,13 @@
     }
     (async function init() {
       supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      try {
+        const { data: sess } = await supa.auth.getSession();
+        accessToken = sess && sess.session ? sess.session.access_token : null;
+        supa.auth.onAuthStateChange((_evt, session) => {
+          accessToken = session ? session.access_token : null;
+        });
+      } catch (e) {}
       try {
         const { data, error } = await supa.from('app_state').select('data').eq('key', appKey).maybeSingle();
         if (!error && data && data.data && Object.keys(data.data).length > 0) {
