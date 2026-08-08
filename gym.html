@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0b">
-<title>Progressive Overload Coach</title>
+<title>Træning</title>
 <script src="lock.js" defer></script>
 <script src="topbar.js" defer></script>
 
@@ -1281,7 +1281,7 @@ img, video, canvas, svg { max-width: 100%; }
 
   <!-- WEIGHT + PROGRESS PHOTOS -->
   <div class="wt-section">
-    <div class="wt-divider"><span>WEIGHT</span></div>
+    <div class="wt-divider"><span>VÆGT</span></div>
 
     <div class="wt-card">
       <div class="wt-row">
@@ -1291,7 +1291,7 @@ img, video, canvas, svg { max-width: 100%; }
       <div class="wt-delta hidden" id="wtDelta"></div>
       <div class="wt-streak hidden" id="wtStreak">🔥<span id="wtStreakNum">0 day streak</span></div>
 
-      <div class="wt-empty" id="wtEmpty">Log your first weight to start tracking.</div>
+      <div class="wt-empty" id="wtEmpty">Log din første vægt for at starte.</div>
 
       <div class="wt-chart-wrap hidden" id="wtChartWrap">
         <div class="wt-chart-yaxis">
@@ -1315,7 +1315,7 @@ img, video, canvas, svg { max-width: 100%; }
       </div>
 
       <div class="wt-legend hidden" id="wtLegend">
-        <span class="wt-legend-item"><span class="wt-legend-dot"></span>DAILY</span>
+        <span class="wt-legend-item"><span class="wt-legend-dot"></span>DAGLIG</span>
         <span class="wt-legend-item"><span class="wt-legend-dot wt-legend-dot-avg"></span>7-DAY AVG</span>
       </div>
 
@@ -1323,8 +1323,8 @@ img, video, canvas, svg { max-width: 100%; }
            how much of recent weight change was muscle vs fat. -->
       <div class="wt-comp hidden" id="wtComp">
         <div class="wt-comp-h">
-          <span class="wt-comp-label">Composition estimate</span>
-          <span class="wt-comp-window" id="wtCompWindow">last 30d</span>
+          <span class="wt-comp-label">Kropssammensætning</span>
+          <span class="wt-comp-window" id="wtCompWindow">sidste 30d</span>
         </div>
         <div class="wt-comp-headline" id="wtCompHeadline">—</div>
         <div class="wt-comp-bars" id="wtCompBars"></div>
@@ -1335,25 +1335,25 @@ img, video, canvas, svg { max-width: 100%; }
         <div class="wt-locked-info">
           <span class="wt-locked-check">✓</span>
           <div>
-            <div class="wt-locked-label">LOGGED TODAY</div>
+            <div class="wt-locked-label">LOGGET I DAG</div>
             <div class="wt-locked-value" id="wtLockedValue">— kg</div>
           </div>
         </div>
-        <button class="wt-edit-btn" id="wtEditBtn">Edit</button>
+        <button class="wt-edit-btn" id="wtEditBtn">Rediger</button>
       </div>
 
       <div class="wt-input-row" id="wtInputRow">
         <div class="wt-input-top">
-          <input type="number" step="0.1" class="wt-input" id="wtInput" placeholder="Enter weight" inputmode="decimal" aria-label="Today's weight">
+          <input type="number" step="0.1" class="wt-input" id="wtInput" placeholder="Indtast vægt" inputmode="decimal" aria-label="Dagens vægt">
           <span class="wt-unit-static" id="wtUnitStatic">kg</span>
-          <button class="wt-save-btn" id="wtSaveBtn">Save</button>
+          <button class="wt-save-btn" id="wtSaveBtn">Gem</button>
         </div>
       </div>
     </div>
 
     <button class="wt-progress-link" id="wtProgressLink" type="button" aria-label="Open progress photos">
       <div>
-        <div class="wt-progress-label">PROGRESS PHOTOS</div>
+        <div class="wt-progress-label">FREMSKRIDTSBILLEDER</div>
         <div class="wt-progress-count" id="wtProgressCount">0 photos</div>
       </div>
       <span class="wt-progress-arrow">→</span>
@@ -1367,11 +1367,11 @@ img, video, canvas, svg { max-width: 100%; }
         <button class="wt-back" id="wtBack" aria-label="Back">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
         </button>
-        <div class="wt-overlay-title">Progress</div>
+        <div class="wt-overlay-title">Fremgang</div>
       </div>
       <div class="wt-overlay-actions">
-        <button class="wt-overlay-action wt-overlay-primary" id="wtTakePhotoBtn">Take Photo</button>
-        <button class="wt-overlay-action wt-overlay-secondary" id="wtFromLibraryBtn">From Library</button>
+        <button class="wt-overlay-action wt-overlay-primary" id="wtTakePhotoBtn">Tag billede</button>
+        <button class="wt-overlay-action wt-overlay-secondary" id="wtFromLibraryBtn">Fra bibliotek</button>
       </div>
       <input type="file" id="wtFileCamera" accept="image/*" capture="environment" style="display:none">
       <input type="file" id="wtFileLibrary" accept="image/*" style="display:none">
@@ -1388,7 +1388,7 @@ img, video, canvas, svg { max-width: 100%; }
       <canvas id="wtCamCanvas" style="display:none"></canvas>
     </div>
     <div class="wt-cam-actions">
-      <button class="wt-cam-btn" id="wtCamCancel">Cancel</button>
+      <button class="wt-cam-btn" id="wtCamCancel">Annuller</button>
       <button class="wt-cam-shutter" id="wtCamShutter" aria-label="Capture"></button>
       <button class="wt-cam-btn" id="wtCamFlip" aria-label="Flip camera">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
@@ -1409,9 +1409,9 @@ img, video, canvas, svg { max-width: 100%; }
         <div class="wt-viewer-weight" id="wtViewerWeight">—</div>
       </div>
       <div class="wt-viewer-actions">
-        <button class="wt-viewer-btn wt-viewer-compare" id="wtViewerCompare">Compare</button>
-        <button class="wt-viewer-btn wt-viewer-close" id="wtViewerClose">Close</button>
-        <button class="wt-viewer-btn wt-viewer-delete" id="wtViewerDelete">Delete</button>
+        <button class="wt-viewer-btn wt-viewer-compare" id="wtViewerCompare">Sammenlign</button>
+        <button class="wt-viewer-btn wt-viewer-close" id="wtViewerClose">Luk</button>
+        <button class="wt-viewer-btn wt-viewer-delete" id="wtViewerDelete">Slet</button>
       </div>
     </div>
 
@@ -1430,15 +1430,15 @@ img, video, canvas, svg { max-width: 100%; }
       <div class="wt-compare-headline" id="wtCompareHeadline">—</div>
       <div class="wt-viewer-actions">
         <button class="wt-viewer-btn wt-viewer-back" id="wtCompareBack">← Back</button>
-        <button class="wt-viewer-btn wt-viewer-close" id="wtCompareClose">Close</button>
-        <button class="wt-viewer-btn wt-viewer-delete" id="wtCompareDelete">Delete</button>
+        <button class="wt-viewer-btn wt-viewer-close" id="wtCompareClose">Luk</button>
+        <button class="wt-viewer-btn wt-viewer-delete" id="wtCompareDelete">Slet</button>
       </div>
     </div>
 
   </div>
 
   <div class="po-header">
-    <h1 class="po-title" id="appTitle">Progressive Overload Coach</h1>
+    <h1 class="po-title" id="appTitle">Træning</h1>
     <button class="po-icon-btn" id="settingsBtn" title="Settings" aria-label="Settings">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </button>
@@ -1452,14 +1452,14 @@ img, video, canvas, svg { max-width: 100%; }
         <div class="po-seg-control" id="gymSeg"></div>
       </div>
       <div class="po-seg-row">
-        <span class="po-seg-label">Day</span>
+        <span class="po-seg-label">Dag</span>
         <div class="po-seg-control" id="daySeg"></div>
       </div>
     </div>
 
     <!-- Exercise -->
     <div class="po-sub-section">
-      <div class="po-sub-title">Exercise</div>
+      <div class="po-sub-title">Øvelse</div>
       <div class="po-exercise-bar">
         <select class="po-ex-select" id="exSelect"></select>
         <button class="po-btn-icon" id="addExBtn" title="Add exercise" aria-label="Add">
@@ -1469,7 +1469,7 @@ img, video, canvas, svg { max-width: 100%; }
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
         </button>
       </div>
-      <div class="po-no-ex" id="noExMsg" style="display:none">No exercises here yet. Tap <strong>+</strong> to add one.</div>
+      <div class="po-no-ex" id="noExMsg" style="display:none">Ingen øvelser her endnu. Tryk <strong>+</strong> for at tilføje.</div>
     </div>
 
     <!-- Log a set -->
@@ -1477,13 +1477,13 @@ img, video, canvas, svg { max-width: 100%; }
       <div class="po-sub-title">Log today's top set</div>
       <div class="po-bw-banner" id="bwBanner">Bodyweight — log reps only</div>
       <div class="po-last-set" id="lastSet">
-        <span class="po-last-label">Last time</span>
+        <span class="po-last-label">Sidste gang</span>
         <span class="po-last-value" id="lastSetValue"></span>
         <span class="po-last-meta" id="lastSetMeta"></span>
       </div>
       <div class="po-log-grid" id="logGrid">
         <div class="po-field" id="weightField">
-          <label id="weightLabel">Weight (kg)</label>
+          <label id="weightLabel">Vægt (kg)</label>
           <div class="po-weight-row">
             <button class="po-w-btn" id="weightDownBtn" type="button">−</button>
             <input type="number" id="weightInput" step="0.5" inputmode="decimal" placeholder="0">
@@ -1505,29 +1505,29 @@ img, video, canvas, svg { max-width: 100%; }
           </div>
         </div>
       </div>
-      <button class="po-btn-primary" id="logBtn">Log set</button>
+      <button class="po-btn-primary" id="logBtn">Log sæt</button>
     </div>
 
     <!-- Prescription -->
     <div class="po-sub-section">
-      <div class="po-sub-title">Next session</div>
+      <div class="po-sub-title">Næste session</div>
       <div id="rxWrap"></div>
     </div>
 
     <!-- Stats -->
     <div class="po-sub-section">
-      <div class="po-sub-title">Stats</div>
+      <div class="po-sub-title">Statistik</div>
       <div class="po-stats-row">
         <div class="po-stat-box">
           <div class="po-stat-label" id="oneRmLabel">Est. 1RM</div>
           <div class="po-stat-val" id="oneRm">—<span class="po-unit" id="oneRmUnit">kg</span></div>
         </div>
         <div class="po-stat-box">
-          <div class="po-stat-label">Best set</div>
+          <div class="po-stat-label">Bedste sæt</div>
           <div class="po-stat-val" id="bestSet">—</div>
         </div>
         <div class="po-stat-box">
-          <div class="po-stat-label">Sessions</div>
+          <div class="po-stat-label">Sessioner</div>
           <div class="po-stat-val" id="sessionCount">—</div>
         </div>
       </div>
@@ -1535,7 +1535,7 @@ img, video, canvas, svg { max-width: 100%; }
 
     <!-- Trend -->
     <div class="po-sub-section">
-      <div class="po-sub-title">Trend (last 10 sessions)</div>
+      <div class="po-sub-title">Tendens (sidste 10 sessioner)</div>
       <div class="po-spark-wrap">
         <svg class="po-spark-svg" id="sparkline" viewBox="0 0 300 60" preserveAspectRatio="none">
           <defs>
@@ -1545,15 +1545,15 @@ img, video, canvas, svg { max-width: 100%; }
             </linearGradient>
           </defs>
         </svg>
-        <div class="po-spark-empty" id="sparkEmpty">Need 2+ sessions for trend</div>
+        <div class="po-spark-empty" id="sparkEmpty">Kræver 2+ sessioner for tendens</div>
       </div>
     </div>
 
     <!-- History -->
     <div class="po-sub-section">
-      <div class="po-sub-title">History</div>
+      <div class="po-sub-title">Historik</div>
       <div id="historyCard">
-        <div class="po-empty">No logs yet.</div>
+        <div class="po-empty">Ingen logs endnu.</div>
       </div>
     </div>
 
@@ -1566,22 +1566,22 @@ img, video, canvas, svg { max-width: 100%; }
       <div class="po-tw" id="poTw">
         <div class="po-tw-head">
           <div>
-            <div class="po-tw-eyebrow" id="poTwDateLabel">TODAY</div>
+            <div class="po-tw-eyebrow" id="poTwDateLabel">I DAG</div>
             <div class="po-tw-summary">
               <span class="po-tw-summary-num" id="poTwSetCount">0</span>
-              <span class="po-tw-summary-label">sets</span>
+              <span class="po-tw-summary-label">sæt</span>
               <span class="po-tw-summary-sep">·</span>
               <span class="po-tw-summary-vol" id="poTwTotalVol">0 kg lifted</span>
             </div>
           </div>
-          <button class="po-tw-done-btn" id="poTwDoneBtn" type="button">Mark workout done</button>
+          <button class="po-tw-done-btn" id="poTwDoneBtn" type="button">Markér træning færdig</button>
         </div>
         <ul class="po-tw-list" id="poTwList"></ul>
         <div class="po-tw-empty" id="poTwEmpty">No sets logged today — log one above and it'll appear here.</div>
       </div>
 
       <button type="button" class="po-tw-past-toggle" id="poTwPastToggle" aria-expanded="false">
-        <span>Past workouts <span class="po-tw-past-count" id="poTwPastCount">0</span></span>
+        <span>Tidligere træninger <span class="po-tw-past-count" id="poTwPastCount">0</span></span>
         <span class="po-tw-past-arrow" id="poTwPastArrow">▾</span>
       </button>
       <div class="po-tw-past-body" id="poTwPastBody" style="display:none"></div>
@@ -1592,17 +1592,17 @@ img, video, canvas, svg { max-width: 100%; }
 <!-- Add / Edit Exercise Modal -->
 <div class="po-modal-bg" id="exModalBg">
   <div class="po-modal">
-    <h3 id="exModalTitle">Add exercise</h3>
+    <h3 id="exModalTitle">Tilføj øvelse</h3>
     <div class="po-field">
-      <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Name</label>
-      <input type="text" id="exName" placeholder="e.g. Incline DB press">
+      <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Navn</label>
+      <input type="text" id="exName" placeholder="fx Skrå håndvægtspres">
     </div>
     <div class="po-field">
       <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Gym</label>
       <div class="po-modal-seg" id="exGymSeg"></div>
     </div>
     <div class="po-field">
-      <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Day</label>
+      <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Dag</label>
       <div class="po-modal-seg" id="exDaySeg"></div>
     </div>
     <label class="po-bw-toggle">
@@ -1610,7 +1610,7 @@ img, video, canvas, svg { max-width: 100%; }
       Bodyweight (track reps only, no weight)
     </label>
     <div class="po-field" id="exStartWeightField">
-      <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Starting weight</label>
+      <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Startvægt</label>
       <input type="number" id="exStartWeight" step="0.5" placeholder="20" value="20">
     </div>
     <div class="po-log-grid" id="exNumFields">
@@ -1619,35 +1619,35 @@ img, video, canvas, svg { max-width: 100%; }
         <input type="number" id="exRepMin" value="6">
       </div>
       <div class="po-field">
-        <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Reps max</label>
+        <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Reps maks</label>
         <input type="number" id="exRepMax" value="8">
       </div>
     </div>
     <div class="po-field" id="exStepField">
-      <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Increment</label>
+      <label style="font-size:11px;color:var(--text-3);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Trin</label>
       <input type="number" id="exStep" step="0.5" value="2.5">
     </div>
     <div class="po-modal-actions">
-      <button class="po-btn-secondary" id="exModalCancel">Cancel</button>
-      <button class="po-btn-primary" id="exModalSave">Save</button>
+      <button class="po-btn-secondary" id="exModalCancel">Annuller</button>
+      <button class="po-btn-primary" id="exModalSave">Gem</button>
     </div>
-    <span class="po-delete-link" id="exDelete" style="display:none">Delete this exercise</span>
+    <span class="po-delete-link" id="exDelete" style="display:none">Slet denne øvelse</span>
   </div>
 </div>
 
 <!-- Rotation editor modal -->
 <div class="po-modal-bg" id="rotModalBg">
   <div class="po-modal">
-    <h3>Edit split rotation</h3>
+    <h3>Rediger split-rotation</h3>
     <p style="font-size:12px;color:var(--text-3);margin:-6px 0 14px;line-height:1.45;">
       Days cycle in this order, repeating forever. Today is whichever entry is highlighted.
-      Use <strong>Today is →</strong> to jump the cycle to a different starting day.
+      Use <strong>I dag er →</strong> to jump the cycle to a different starting day.
     </p>
     <div class="rot-list" id="rotList"></div>
     <button class="po-add-row-btn" id="rotAddBtn">+ Add day</button>
     <div class="po-modal-actions">
-      <button class="po-btn-secondary" id="rotCancel">Cancel</button>
-      <button class="po-btn-primary" id="rotSave">Save</button>
+      <button class="po-btn-secondary" id="rotCancel">Annuller</button>
+      <button class="po-btn-primary" id="rotSave">Gem</button>
     </div>
   </div>
 </div>
@@ -1655,10 +1655,10 @@ img, video, canvas, svg { max-width: 100%; }
 <!-- Settings Modal -->
 <div class="po-modal-bg" id="setModalBg">
   <div class="po-modal" style="max-width: 480px;">
-    <h3>Settings</h3>
+    <h3>Indstillinger</h3>
 
     <div class="po-set-section">
-      <h4>Units</h4>
+      <h4>Enheder</h4>
       <div class="po-modal-seg" id="setUnitsSeg">
         <button data-u="kg">kg</button>
         <button data-u="lb">lb</button>
@@ -1666,13 +1666,13 @@ img, video, canvas, svg { max-width: 100%; }
     </div>
 
     <div class="po-set-section">
-      <h4>Gyms</h4>
+      <h4>Centre</h4>
       <div class="po-set-list" id="setGyms"></div>
       <button class="po-add-row-btn" id="setAddGym">+ Add gym</button>
     </div>
 
     <div class="po-set-section">
-      <h4>Days</h4>
+      <h4>Dage</h4>
       <div class="po-set-list" id="setDays"></div>
       <button class="po-add-row-btn" id="setAddDay">+ Add day</button>
     </div>
@@ -1680,15 +1680,15 @@ img, video, canvas, svg { max-width: 100%; }
     <div class="po-set-section">
       <h4>Data</h4>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="po-btn-secondary" id="setExport">Export JSON</button>
-        <button class="po-btn-secondary" id="setImport">Import JSON</button>
-        <button class="po-btn-secondary" id="setReset" style="color:var(--bad);border-color:rgba(255,138,138,0.3)">Reset all</button>
+        <button class="po-btn-secondary" id="setExport">Eksportér JSON</button>
+        <button class="po-btn-secondary" id="setImport">Importér JSON</button>
+        <button class="po-btn-secondary" id="setReset" style="color:var(--bad);border-color:rgba(255,138,138,0.3)">Nulstil alt</button>
       </div>
       <input type="file" id="setImportFile" accept=".json" style="display:none">
     </div>
 
     <div class="po-modal-actions">
-      <button class="po-btn-primary" id="setModalClose">Done</button>
+      <button class="po-btn-primary" id="setModalClose">Færdig</button>
     </div>
   </div>
 </div>
@@ -1753,7 +1753,7 @@ img, video, canvas, svg { max-width: 100%; }
     try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
   }
   let state = loadState();
-  document.getElementById('appTitle').textContent = CONFIG.appTitle || 'Progressive Overload Coach';
+  document.getElementById('appTitle').textContent = CONFIG.appTitle || 'Træning';
 
   // ============================================================
   // HELPERS
@@ -1794,17 +1794,17 @@ img, video, canvas, svg { max-width: 100%; }
       if (logs[i].weight === weight) stuck++; else break;
     }
     if (bw) {
-      if (reps >= upgradeAt) return { type: 'up', weight: 0, reps: reps + 1, tag: 'Push for more', reason: reps + ' reps — strong. Push for ' + (reps + 1) + ' next time.', bw: true };
-      if (reps >= repMin) return { type: 'hold', weight: 0, reps: reps + 1, tag: 'Add a rep', reason: reps + ' reps. Push for ' + (reps + 1) + ' next session.', bw: true };
-      return { type: 'hold', weight: 0, reps: repMin, tag: 'Repeat', reason: reps + ' reps fell short. Repeat until you hit ' + repMin + '+.', bw: true };
+      if (reps >= upgradeAt) return { type: 'up', weight: 0, reps: reps + 1, tag: 'Pres på', reason: reps + ' reps — stærkt. Gå efter ' + (reps + 1) + ' næste gang.', bw: true };
+      if (reps >= repMin) return { type: 'hold', weight: 0, reps: reps + 1, tag: 'Tilføj en rep', reason: reps + ' reps. Gå efter ' + (reps + 1) + ' næste session.', bw: true };
+      return { type: 'hold', weight: 0, reps: repMin, tag: 'Gentag', reason: reps + ' reps kom til kort. Gentag indtil du rammer ' + repMin + '+.', bw: true };
     }
     if (stuck >= 3 && reps < repMin) {
       const dl = roundToStep(weight * 0.9, step);
-      return { type: 'down', weight: dl, reps: repMax, tag: 'Deload', reason: 'Stuck at ' + weight + unit() + ' for ' + stuck + ' sessions. Drop 10%, reset, build back cleaner.' };
+      return { type: 'down', weight: dl, reps: repMax, tag: 'Aflast', reason: 'Fast på ' + weight + unit() + ' i ' + stuck + ' sessioner. Sænk 10%, nulstil, byg renere op.' };
     }
-    if (reps >= upgradeAt) return { type: 'up', weight: weight + step, reps: repMin, tag: 'Add weight', reason: 'You hit ' + reps + ' reps — time to add ' + step + unit() + '. Expect ' + repMin + '-' + (repMin + 1) + ' next session.' };
-    if (reps >= repMin && reps < upgradeAt) return { type: 'hold', weight: weight, reps: reps + 1, tag: 'Add a rep', reason: reps + ' reps in target. Stay at ' + weight + unit() + ', push for ' + (reps + 1) + '.' };
-    return { type: 'hold', weight: weight, reps: repMin, tag: 'Repeat', reason: reps + ' reps short of ' + repMin + '-' + upgradeAt + '. Repeat ' + weight + unit() + ' until you hit ' + repMin + '+ clean.' };
+    if (reps >= upgradeAt) return { type: 'up', weight: weight + step, reps: repMin, tag: 'Læg vægt på', reason: 'Du ramte ' + reps + ' reps — tid til at lægge ' + step + unit() + ' på. Forvent ' + repMin + '-' + (repMin + 1) + ' næste session.' };
+    if (reps >= repMin && reps < upgradeAt) return { type: 'hold', weight: weight, reps: reps + 1, tag: 'Tilføj en rep', reason: reps + ' reps i mål. Bliv på ' + weight + unit() + ', gå efter ' + (reps + 1) + '.' };
+    return { type: 'hold', weight: weight, reps: repMin, tag: 'Gentag', reason: reps + ' reps fra ' + repMin + '-' + upgradeAt + '. Gentag ' + weight + unit() + ' indtil du rammer ' + repMin + '+ rent.' };
   }
 
   // ============================================================
@@ -1857,12 +1857,12 @@ img, video, canvas, svg { max-width: 100%; }
     const wField = $('weightField');
     const oneRmLbl = $('oneRmLabel');
     const grid = $('logGrid');
-    $('weightLabel').textContent = 'Weight (' + unit() + ')';
+    $('weightLabel').textContent = 'Vægt (' + unit() + ')';
     if (ex && ex.bw) {
       banner.classList.add('show');
       wField.style.display = 'none';
       grid.classList.add('po-bw-mode');
-      oneRmLbl.textContent = 'Best reps';
+      oneRmLbl.textContent = 'Bedste reps';
     } else {
       banner.classList.remove('show');
       wField.style.display = '';
@@ -1889,7 +1889,7 @@ img, video, canvas, svg { max-width: 100%; }
   function renderRx() {
     const wrap = $('rxWrap');
     const ex = getCurrentEx();
-    if (!ex) { wrap.innerHTML = '<div class="po-rx-empty">Pick a gym and day above.</div>'; return; }
+    if (!ex) { wrap.innerHTML = '<div class="po-rx-empty">Vælg gym og dag ovenfor.</div>'; return; }
     const logs = getLogs();
     const rx = getRx(ex, logs);
     if (!rx) {
@@ -1900,7 +1900,7 @@ img, video, canvas, svg { max-width: 100%; }
       const reason = ex.bw
         ? 'Aim for ' + ex.repMin + '-' + ex.repMax + ' clean reps. Once you hit ' + ex.repMax + '+, push for more.'
         : 'Hit ' + ex.repMin + '-' + ex.repMax + ' reps. Once logged, the coach will start prescribing.';
-      wrap.innerHTML = '<div class="po-rx-card"><div class="po-rx-label">' + escape(ex.name) + ' · starting point</div><div class="po-rx-headline">' + head + '</div><span class="po-rx-tag hold">Start here</span><p class="po-rx-reason">' + reason + '</p></div>';
+      wrap.innerHTML = '<div class="po-rx-card"><div class="po-rx-label">' + escape(ex.name) + ' · startpunkt</div><div class="po-rx-headline">' + head + '</div><span class="po-rx-tag hold">Start her</span><p class="po-rx-reason">' + reason + '</p></div>';
       return;
     }
     const head = rx.bw
@@ -1966,7 +1966,7 @@ img, video, canvas, svg { max-width: 100%; }
     const ex = getCurrentEx();
     const logs = ex ? getLogs().slice().reverse() : [];
     if (!logs.length) {
-      wrap.innerHTML = '<div class="po-empty">No logs yet.</div>';
+      wrap.innerHTML = '<div class="po-empty">Ingen logs endnu.</div>';
       return;
     }
     wrap.innerHTML = logs.slice(0, 12).map((l, i) => {
@@ -1982,7 +1982,7 @@ img, video, canvas, svg { max-width: 100%; }
     }).join('');
     wrap.querySelectorAll('.po-hist-del').forEach(b => {
       b.addEventListener('click', () => {
-        if (!confirm('Delete this log?')) return;
+        if (!confirm('Slet denne log?')) return;
         const realIdx = parseInt(b.dataset.idx, 10);
         const arr = state.logs[state.currentEx] || [];
         // realIdx is index in REVERSED list; map back to original
@@ -2012,8 +2012,8 @@ img, video, canvas, svg { max-width: 100%; }
   }
   function todayDateLabel() {
     const d = new Date();
-    const dows = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-    const mons = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    const dows = ['SØN','MAN','TIR','ONS','TOR','FRE','LØR'];
+    const mons = ['JAN','FEB','MAR','APR','MAJ','JUN','JUL','AUG','SEP','OKT','NOV','DEC'];
     return dows[d.getDay()] + ', ' + mons[d.getMonth()] + ' ' + d.getDate();
   }
   function isRestName(name) { return /^rest\b/i.test(name || ''); }
@@ -2116,8 +2116,8 @@ img, video, canvas, svg { max-width: 100%; }
   function fmtPastDate(dk) {
     const [y, m, d] = dk.split('-').map(Number);
     const dt = new Date(y, m - 1, d);
-    const dows = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-    const mons = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    const dows = ['SØN','MAN','TIR','ONS','TOR','FRE','LØR'];
+    const mons = ['JAN','FEB','MAR','APR','MAJ','JUN','JUL','AUG','SEP','OKT','NOV','DEC'];
     return dows[dt.getDay()] + ' ' + mons[dt.getMonth()] + ' ' + dt.getDate();
   }
 
@@ -2143,13 +2143,13 @@ img, video, canvas, svg { max-width: 100%; }
     const u = state.units;
 
     const eyebrow = $('poTwDateLabel');
-    const dows = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-    const mons = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    const dows = ['SØN','MAN','TIR','ONS','TOR','FRE','LØR'];
+    const mons = ['JAN','FEB','MAR','APR','MAJ','JUN','JUL','AUG','SEP','OKT','NOV','DEC'];
     const d = new Date();
-    eyebrow.textContent = 'TODAY · ' + dows[d.getDay()] + ', ' + mons[d.getMonth()] + ' ' + d.getDate();
+    eyebrow.textContent = 'I DAG · ' + dows[d.getDay()] + ', ' + mons[d.getMonth()] + ' ' + d.getDate();
 
     $('poTwSetCount').textContent = sum.totalSets;
-    $('poTwTotalVol').textContent = Math.round(sum.totalVol).toLocaleString() + ' ' + u + ' lifted';
+    $('poTwTotalVol').textContent = Math.round(sum.totalVol).toLocaleString() + ' ' + u + ' løftet';
 
     const list = $('poTwList');
     const empty = $('poTwEmpty');
@@ -2175,7 +2175,7 @@ img, video, canvas, svg { max-width: 100%; }
     // Done button state
     const btn = $('poTwDoneBtn');
     const isDone = !!doneDays[todayKey];
-    btn.textContent = isDone ? '✓ Done' : 'Mark workout done';
+    btn.textContent = isDone ? '✓ Færdig' : 'Markér træning færdig';
     btn.classList.toggle('is-done', isDone);
     btn.disabled = sum.totalSets === 0 && !isDone;
     btn.style.opacity = btn.disabled ? '0.4' : '';
@@ -2190,7 +2190,7 @@ img, video, canvas, svg { max-width: 100%; }
     $('poTwPastCount').textContent = past.length;
     const body = $('poTwPastBody');
     if (!past.length) {
-      body.innerHTML = '<div class="po-tw-past-empty">No past workouts yet.</div>';
+      body.innerHTML = '<div class="po-tw-past-empty">Ingen tidligere træninger endnu.</div>';
       return;
     }
     const u = state.units;
@@ -2204,7 +2204,7 @@ img, video, canvas, svg { max-width: 100%; }
         +   '<span class="po-tw-past-day-date">' + fmtPastDate(dk) + '</span>'
         +   '<span class="po-tw-past-day-summary">'
         +     sum.totalSets + ' sets · ' + Math.round(sum.totalVol).toLocaleString() + ' ' + u
-        +     (isDone ? ' <span class="po-tw-past-day-done">DONE</span>' : '')
+        +     (isDone ? ' <span class="po-tw-past-day-done">FÆRDIG</span>' : '')
         +   '</span>'
         + '</div>'
         + '<div class="po-tw-past-day-summary" style="margin-top:6px; font-size:11px; color:var(--text-3);">'
@@ -2280,9 +2280,9 @@ img, video, canvas, svg { max-width: 100%; }
     const ex = getCurrentEx();
     if (!ex) return;
     const reps = parseInt($('repsRow').dataset.value, 10) || 0;
-    if (reps <= 0) { alert('Pick a rep count.'); return; }
+    if (reps <= 0) { alert('Vælg antal reps.'); return; }
     const w = ex.bw ? 0 : (parseFloat($('weightInput').value) || 0);
-    if (!ex.bw && w <= 0) { alert('Enter a weight.'); return; }
+    if (!ex.bw && w <= 0) { alert('Indtast en vægt.'); return; }
     const arr = state.logs[ex.id] || [];
     arr.push({ weight: w, reps: reps, date: new Date().toISOString() });
     state.logs[ex.id] = arr;
@@ -2304,7 +2304,7 @@ img, video, canvas, svg { max-width: 100%; }
   function renderModalSegs() {
     $('exGymSeg').innerHTML = state.gyms.map(g =>
       '<button data-gym="' + g.id + '" class="' + (modalGym === g.id ? 'active' : '') + '">' + escape(g.name) + '</button>'
-    ).join('') + '<button data-gym="both" class="' + (modalGym === 'both' ? 'active' : '') + '">Both</button>';
+    ).join('') + '<button data-gym="both" class="' + (modalGym === 'both' ? 'active' : '') + '">Begge</button>';
     $('exDaySeg').innerHTML = state.days.map(d =>
       '<button data-day="' + d.id + '" class="' + (modalDay === d.id ? 'active' : '') + '">' + escape(d.name) + '</button>'
     ).join('');
@@ -2325,7 +2325,7 @@ img, video, canvas, svg { max-width: 100%; }
   }
   function openExModal(mode, ex) {
     editingExId = mode === 'edit' ? ex.id : null;
-    $('exModalTitle').textContent = mode === 'edit' ? 'Edit exercise' : 'Add exercise';
+    $('exModalTitle').textContent = mode === 'edit' ? 'Rediger øvelse' : 'Tilføj øvelse';
     $('exDelete').style.display = mode === 'edit' ? 'block' : 'none';
     if (mode === 'edit') {
       $('exName').value = ex.name;
@@ -2365,9 +2365,9 @@ img, video, canvas, svg { max-width: 100%; }
   $('exModalCancel').addEventListener('click', () => $('exModalBg').classList.remove('show'));
   $('exModalSave').addEventListener('click', () => {
     const name = $('exName').value.trim();
-    if (!name) { alert('Name is required.'); return; }
-    if (!modalGym) { alert('Pick a gym.'); return; }
-    if (!modalDay) { alert('Pick a day.'); return; }
+    if (!name) { alert('Navn er påkrævet.'); return; }
+    if (!modalGym) { alert('Vælg et gym.'); return; }
+    if (!modalDay) { alert('Vælg en dag.'); return; }
     const isBw = $('exBw').checked;
     const repMin = parseInt($('exRepMin').value, 10) || 6;
     const repMax = parseInt($('exRepMax').value, 10) || 8;
@@ -2394,7 +2394,7 @@ img, video, canvas, svg { max-width: 100%; }
   });
   $('exDelete').addEventListener('click', () => {
     if (!editingExId) return;
-    if (!confirm('Delete this exercise and all its logs?')) return;
+    if (!confirm('Slet denne øvelse og alle dens logs?')) return;
     state.exercises = state.exercises.filter(e => e.id !== editingExId);
     delete state.logs[editingExId];
     if (state.currentEx === editingExId) state.currentEx = null;
@@ -2428,10 +2428,10 @@ img, video, canvas, svg { max-width: 100%; }
       const isToday = (i === rotDraftTodayIdx);
       return '<div class="rot-row ' + (isToday ? 'is-today' : '') + '" data-i="' + i + '">'
         + '<span class="rot-row-num">' + (i + 1) + '</span>'
-        + '<input type="text" value="' + escape(name) + '" placeholder="e.g. Arms" maxlength="30">'
+        + '<input type="text" value="' + escape(name) + '" placeholder="fx Arme" maxlength="30">'
         + (isToday
-            ? '<span class="rot-today-tag">TODAY</span>'
-            : '<button type="button" class="rot-today-btn" data-action="today">Today is →</button>')
+            ? '<span class="rot-today-tag">I DAG</span>'
+            : '<button type="button" class="rot-today-btn" data-action="today">I dag er →</button>')
         + '<button type="button" class="rot-mini" data-action="up"   aria-label="Move up">↑</button>'
         + '<button type="button" class="rot-mini" data-action="down" aria-label="Move down">↓</button>'
         + '<button type="button" class="rot-mini rot-mini-del" data-action="del" aria-label="Delete">×</button>'
@@ -2459,7 +2459,7 @@ img, video, canvas, svg { max-width: 100%; }
         renderRotList();
       });
       if (delBtn) delBtn.addEventListener('click', () => {
-        if (rotDraft.length <= 1) { alert('Need at least one day in the cycle.'); return; }
+        if (rotDraft.length <= 1) { alert('Kræver mindst én dag i cyklussen.'); return; }
         rotDraft.splice(i, 1);
         if (rotDraftTodayIdx >= rotDraft.length) rotDraftTodayIdx = rotDraft.length - 1;
         else if (i < rotDraftTodayIdx) rotDraftTodayIdx--;
@@ -2489,7 +2489,7 @@ img, video, canvas, svg { max-width: 100%; }
   $('rotSave').addEventListener('click', () => {
     // Trim + drop empty entries
     const cleaned = rotDraft.map(s => (s || '').trim()).filter(Boolean);
-    if (!cleaned.length) { alert('Need at least one day in the cycle.'); return; }
+    if (!cleaned.length) { alert('Kræver mindst én dag i cyklussen.'); return; }
     let newTodayIdx = rotDraftTodayIdx;
     if (newTodayIdx >= cleaned.length) newTodayIdx = 0;
     state.splitRotation = cleaned;
@@ -2512,13 +2512,13 @@ img, video, canvas, svg { max-width: 100%; }
     });
     $('setGyms').innerHTML = state.gyms.map((g, i) =>
       '<div class="po-set-row" data-i="' + i + '">'
-      + '<input type="text" value="' + escape(g.name) + '" data-field="name" placeholder="Gym name">'
+      + '<input type="text" value="' + escape(g.name) + '" data-field="name" placeholder="Center-navn">'
       + '<button class="po-mini-btn" data-action="del" aria-label="Delete">×</button>'
       + '</div>'
     ).join('');
     $('setDays').innerHTML = state.days.map((d, i) =>
       '<div class="po-set-row" data-i="' + i + '">'
-      + '<input type="text" value="' + escape(d.name) + '" data-field="name" placeholder="Day name">'
+      + '<input type="text" value="' + escape(d.name) + '" data-field="name" placeholder="Dagsnavn">'
       + '<button class="po-mini-btn" data-action="del" aria-label="Delete">×</button>'
       + '</div>'
     ).join('');
@@ -2529,8 +2529,8 @@ img, video, canvas, svg { max-width: 100%; }
         saveState();
       });
       row.querySelector('[data-action="del"]').addEventListener('click', () => {
-        if (state.gyms.length <= 1) { alert('You need at least one gym.'); return; }
-        if (!confirm('Remove "' + state.gyms[i].name + '"? Exercises tagged to this gym will become invisible until you reassign them.')) return;
+        if (state.gyms.length <= 1) { alert('Du skal have mindst ét gym.'); return; }
+        if (!confirm('Fjern "' + state.gyms[i].name + '"? Øvelser knyttet til dette gym bliver skjult, indtil du flytter dem.')) return;
         state.gyms.splice(i, 1);
         if (!state.gyms.find(g => g.id === state.filterGym)) state.filterGym = state.gyms[0].id;
         saveState(); renderSettings(); renderAll();
@@ -2543,8 +2543,8 @@ img, video, canvas, svg { max-width: 100%; }
         saveState();
       });
       row.querySelector('[data-action="del"]').addEventListener('click', () => {
-        if (state.days.length <= 1) { alert('You need at least one day.'); return; }
-        if (!confirm('Remove "' + state.days[i].name + '"?')) return;
+        if (state.days.length <= 1) { alert('Du skal have mindst én dag.'); return; }
+        if (!confirm('Fjern "' + state.days[i].name + '"?')) return;
         state.days.splice(i, 1);
         if (!state.days.find(d => d.id === state.filterDay)) state.filterDay = state.days[0].id;
         saveState(); renderSettings(); renderAll();
@@ -2597,15 +2597,15 @@ img, video, canvas, svg { max-width: 100%; }
     reader.onload = () => {
       try {
         const parsed = JSON.parse(reader.result);
-        if (!confirm('Replace ALL current data with the imported file? This cannot be undone.')) return;
+        if (!confirm('Erstat ALLE nuværende data med den importerede fil? Kan ikke fortrydes.')) return;
         state = normalize(parsed);
         saveState(); renderSettings(); renderAll();
-      } catch (err) { alert('Import failed: ' + err.message); }
+      } catch (err) { alert('Import fejlede: ' + err.message); }
     };
     reader.readAsText(file);
   });
   $('setReset').addEventListener('click', () => {
-    if (!confirm('Delete EVERYTHING (logs, edits, gyms, days)? This cannot be undone.')) return;
+    if (!confirm('Slet ALT (logs, redigeringer, gyms, dage)? Kan ikke fortrydes.')) return;
     localStorage.removeItem(LS_KEY);
     state = loadState();
     $('setModalBg').classList.remove('show');

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#050506">
-<title>Mathematics · Dashboard</title>
+<title>Matematik</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lock.js" defer></script>
@@ -370,60 +370,60 @@ body::after {
 <body>
 <div class="page">
 
-  <h1 class="dash-title">Mathematics</h1>
+  <h1 class="dash-title">Matematik</h1>
 
   <!-- ===== This Week: streak + weekly practice goal ===== -->
   <div class="section">
-    <div class="section-title">This Week</div>
+    <div class="section-title">Denne uge</div>
     <div class="gm-card">
       <div class="gm-header">
         <div class="gm-header-left">
-          <div class="gm-eyebrow">Practice Sessions</div>
+          <div class="gm-eyebrow">Øvelsessessioner</div>
           <div class="gm-progress-row">
             <span class="gm-progress-num" id="weekNum">0</span>
             <span class="gm-progress-total" id="weekTotal">/ 3</span>
-            <span class="gm-progress-label">this week</span>
+            <span class="gm-progress-label">denne uge</span>
           </div>
         </div>
         <div class="gm-streak" id="mathStreak">
           <span class="gm-streak-icon">🔥</span>
           <span class="gm-streak-num" id="mathStreakNum">0</span>
-          <span>day streak</span>
+          <span>dages stime</span>
         </div>
       </div>
       <div class="gm-bar" id="weekBar"></div>
       <div class="week-target-row">
-        <label for="weekTargetInput">Weekly target</label>
+        <label for="weekTargetInput">Ugentligt mål</label>
         <input type="number" id="weekTargetInput" min="1" max="14" step="1">
-        <span>sessions</span>
+        <span>sessioner</span>
       </div>
     </div>
   </div>
 
   <!-- ===== Topics: mastery per topic ===== -->
   <div class="section">
-    <div class="section-title">Topics</div>
+    <div class="section-title">Emner</div>
     <div class="gm-card">
       <div class="topic-grid" id="topicGrid"></div>
-      <div id="topicEmpty" class="empty-state">No topics yet — add what you're studying below.</div>
+      <div id="topicEmpty" class="empty-state">Ingen emner endnu — tilføj det du læser nedenfor.</div>
       <div class="gm-input-wrap">
-        <input class="gm-input" id="topicInput" type="text" placeholder="Add a topic (e.g. Quadratic equations)…" autocomplete="off">
-        <button class="gm-add" id="topicAdd" type="button">+ Add</button>
+        <input class="gm-input" id="topicInput" type="text" placeholder="Tilføj et emne (fx andengradsligninger)…" autocomplete="off">
+        <button class="gm-add" id="topicAdd" type="button">+ Tilføj</button>
       </div>
     </div>
   </div>
 
   <!-- ===== Practice Log ===== -->
   <div class="section">
-    <div class="section-title">Practice Log</div>
+    <div class="section-title">Øvelseslog</div>
     <div class="gm-card">
       <ul class="goal-list" id="practiceList"></ul>
-      <div id="practiceEmpty" class="empty-state">No sessions logged yet.</div>
+      <div id="practiceEmpty" class="empty-state">Ingen sessioner logget endnu.</div>
       <div class="gm-input-wrap">
         <select class="gm-input" id="practiceTopic" style="flex:1 1 140px;"></select>
-        <input class="gm-input" id="practiceMinutes" type="number" min="1" placeholder="Minutes" style="flex:0 1 90px;">
-        <input class="gm-input" id="practiceCorrect" type="number" min="0" placeholder="Correct" style="flex:0 1 90px;">
-        <input class="gm-input" id="practiceAttempted" type="number" min="0" placeholder="Attempted" style="flex:0 1 100px;">
+        <input class="gm-input" id="practiceMinutes" type="number" min="1" placeholder="Minutter" style="flex:0 1 90px;">
+        <input class="gm-input" id="practiceCorrect" type="number" min="0" placeholder="Rigtige" style="flex:0 1 90px;">
+        <input class="gm-input" id="practiceAttempted" type="number" min="0" placeholder="Forsøgte" style="flex:0 1 100px;">
         <button class="gm-add" id="practiceAdd" type="button">+ Log</button>
       </div>
     </div>
@@ -431,11 +431,11 @@ body::after {
 
   <!-- ===== Test & Quiz Scores ===== -->
   <div class="section">
-    <div class="section-title">Test &amp; Quiz Scores</div>
+    <div class="section-title">Test &amp; prøvekarakterer</div>
     <div class="gm-card">
       <div class="mt-chart-wrap" id="mtChartWrap">
         <div class="mt-chart-head">
-          <span class="mt-chart-label">Grade trend</span>
+          <span class="mt-chart-label">Karakterudvikling</span>
           <span class="mt-chart-delta" id="mtChartDelta">—</span>
         </div>
         <svg class="mt-chart-svg" id="mtChartSvg" viewBox="0 0 600 180" preserveAspectRatio="none" aria-hidden="true">
@@ -454,19 +454,19 @@ body::after {
                 stroke-linejoin="round" stroke-linecap="round"
                 style="filter: drop-shadow(0 0 6px currentColor)" d=""/>
         </svg>
-        <div class="mt-chart-empty" id="mtChartEmpty">Log a test score to start tracking your grade trend.</div>
+        <div class="mt-chart-empty" id="mtChartEmpty">Log en testkarakter for at følge din udvikling.</div>
         <div class="mt-chart-stats" id="mtChartStats">
-          <div class="mt-stat"><div class="mt-stat-label">Average</div><div class="mt-stat-val" id="mtStatAvg">—</div></div>
-          <div class="mt-stat"><div class="mt-stat-label">Highest</div><div class="mt-stat-val" id="mtStatHigh">—</div></div>
-          <div class="mt-stat"><div class="mt-stat-label">Lowest</div><div class="mt-stat-val" id="mtStatLow">—</div></div>
-          <div class="mt-stat"><div class="mt-stat-label">Tests logged</div><div class="mt-stat-val" id="mtStatCount">—</div></div>
+          <div class="mt-stat"><div class="mt-stat-label">Gennemsnit</div><div class="mt-stat-val" id="mtStatAvg">—</div></div>
+          <div class="mt-stat"><div class="mt-stat-label">Højeste</div><div class="mt-stat-val" id="mtStatHigh">—</div></div>
+          <div class="mt-stat"><div class="mt-stat-label">Laveste</div><div class="mt-stat-val" id="mtStatLow">—</div></div>
+          <div class="mt-stat"><div class="mt-stat-label">Test logget</div><div class="mt-stat-val" id="mtStatCount">—</div></div>
         </div>
       </div>
 
       <ul class="goal-list" id="testList"></ul>
-      <div id="testEmpty" class="empty-state">No tests logged yet.</div>
+      <div id="testEmpty" class="empty-state">Ingen test logget endnu.</div>
       <div class="gm-input-wrap">
-        <input class="gm-input" id="testUnit" type="text" placeholder="Topic / unit (e.g. Chapter 4 test)" style="flex:1 1 180px;" autocomplete="off">
+        <input class="gm-input" id="testUnit" type="text" placeholder="Emne / forløb (fx kapitel 4-test)" style="flex:1 1 180px;" autocomplete="off">
         <select class="gm-input" id="testGrade" style="flex:0 1 90px;"></select>
         <button class="gm-add" id="testAdd" type="button">+ Log</button>
       </div>
@@ -475,13 +475,13 @@ body::after {
 
   <!-- ===== Weak Spots / Review Queue ===== -->
   <div class="section">
-    <div class="section-title">Weak Spots</div>
+    <div class="section-title">Svage punkter</div>
     <div class="gm-card">
       <ul class="goal-list" id="reviewList"></ul>
-      <div id="reviewEmpty" class="empty-state">Nothing flagged — nice.</div>
+      <div id="reviewEmpty" class="empty-state">Intet markeret — flot.</div>
       <div class="gm-input-wrap">
-        <input class="gm-input" id="reviewInput" type="text" placeholder="What tripped you up? (e.g. sign errors in equations)…" autocomplete="off">
-        <button class="gm-add" id="reviewAdd" type="button">+ Add</button>
+        <input class="gm-input" id="reviewInput" type="text" placeholder="Hvad drillede? (fx fortegnsfejl i ligninger)…" autocomplete="off">
+        <button class="gm-add" id="reviewAdd" type="button">+ Tilføj</button>
       </div>
     </div>
   </div>
@@ -527,7 +527,7 @@ body::after {
   function fmtShortDate(yyyy_mm_dd) {
     const parts = yyyy_mm_dd.split('-').map(Number);
     const d = new Date(parts[0], parts[1] - 1, parts[2]);
-    const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+    const mo = ['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'][d.getMonth()];
     return mo + ' ' + d.getDate();
   }
 
@@ -711,7 +711,7 @@ body::after {
     sel.innerHTML = '';
     if (topics.length === 0) {
       const opt = document.createElement('option');
-      opt.value = ''; opt.textContent = 'Add a topic first';
+      opt.value = ''; opt.textContent = 'Tilføj et emne først';
       sel.appendChild(opt);
       sel.disabled = true;
       return;
@@ -726,7 +726,7 @@ body::after {
   }
   function topicName(id) {
     const t = load(K_TOPICS, []).find(x => x.id === id);
-    return t ? t.name : 'Unknown topic';
+    return t ? t.name : 'Ukendt emne';
   }
   function renderPractice() {
     const list = load(K_PRACTICE, []).slice().sort((a, b) => (b.ts || 0) - (a.ts || 0));
@@ -742,7 +742,7 @@ body::after {
       const text = document.createElement('span');
       text.className = 'gm-text';
       let acc = '';
-      if (p.attempted) acc = ' · ' + p.correct + '/' + p.attempted + ' correct';
+      if (p.attempted) acc = ' · ' + p.correct + '/' + p.attempted + ' rigtige';
       text.textContent = topicName(p.topicId) + ' · ' + p.minutes + ' min' + acc;
 
       const meta = document.createElement('span');
@@ -816,7 +816,7 @@ body::after {
 
       const text = document.createElement('span');
       text.className = 'gm-text';
-      text.textContent = (t.unit || 'Test') + ' · grade ' + gradeLabel(t.grade);
+      text.textContent = (t.unit || 'Test') + ' · karakter ' + gradeLabel(t.grade);
 
       const meta = document.createElement('span');
       meta.className = 'gm-log-meta';
