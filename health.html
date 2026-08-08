@@ -748,6 +748,10 @@ main {
           <div class="sl-chart-head"><span class="sl-chart-title">Hvilepuls · 7 dage</span><span class="sl-chart-avg" id="slAvgPulse"></span></div>
           <div id="slChartPulse"><div class="sl-chart-empty">Ingen data endnu</div></div>
         </div>
+        <div class="sl-chart">
+          <div class="sl-chart-head"><span class="sl-chart-title">Sovepuls <span class="sl-score-est">· non-REM</span></span><span class="sl-chart-avg" id="slAvgSleepPulse"></span></div>
+          <div id="slChartSleepPulse"><div class="sl-chart-empty">Ingen data endnu</div></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1695,6 +1699,21 @@ document.addEventListener('DOMContentLoaded', function () {
     return byDay;
   }
 
+  // Sleeping heart rate 7-day series -> { 'YYYY-MM-DD': bpm }.
+  // Source: dailyHeartRateVariability.nonRemHeartRateBeatsPerMinute (HR during non-REM sleep).
+  function slSleepPulseDays(arr) {
+    if (!Array.isArray(arr)) return {};
+    const byDay = {};
+    arr.forEach(p => {
+      const v = p && p.dailyHeartRateVariability;
+      if (v && v.date && v.nonRemHeartRateBeatsPerMinute != null) {
+        const d = v.date, bpm = Math.round(Number(v.nonRemHeartRateBeatsPerMinute));
+        if (!isNaN(bpm) && bpm > 0) byDay[`${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`] = bpm;
+      }
+    });
+    return byDay;
+  }
+
   function slRenderHypnogram(sess) {
     const wrap = $('slHypnoWrap');
     if (!wrap) return;
@@ -1815,6 +1834,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const pulseItems = days.map(d => ({ label: lbl(d), value: pulseMap[d.date] != null ? pulseMap[d.date] : null, display: pulseMap[d.date] != null ? pulseMap[d.date] : '' }));
     slRenderLine('slChartPulse', pulseItems, { color: '#FF6B6B' });
 
+    // Sleeping pulse (non-REM HR) aligned to the same 7 wake-days
+    const sPulseMap = slSleepPulseDays(data['daily-heart-rate-variability']);
+    const sPulseItems = days.map(d => ({ label: lbl(d), value: sPulseMap[d.date] != null ? sPulseMap[d.date] : null, display: sPulseMap[d.date] != null ? sPulseMap[d.date] : '' }));
+    slRenderLine('slChartSleepPulse', sPulseItems, { color: '#F48FB1' });
+
     const avg = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
     const avgHrs = avg(days.map(d => d.total));
     const avgScore = avg(days.filter(d => d.score != null).map(d => d.score));
@@ -1824,6 +1848,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const avgDeep = avg(days.map(d => d.stageMin.deep));
     const pulseVals = pulseItems.map(p => p.value).filter(v => v != null);
     const avgPulse = avg(pulseVals);
+    const sPulseVals = sPulseItems.map(p => p.value).filter(v => v != null);
+    const avgSleepPulse = avg(sPulseVals);
     if (avgHrs != null) $('slAvgHours').textContent = 'gns ' + slFmtDur(avgHrs);
     if (avgScore != null) $('slAvgScore').textContent = 'gns ' + Math.round(avgScore);
     if (avgPrim != null) $('slAvgPrimary').textContent = 'gns ' + slFmtDur(avgPrim);
@@ -1831,6 +1857,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (avgRem != null) $('slAvgRem').textContent = 'gns ' + slFmtDur(avgRem);
     if (avgDeep != null) $('slAvgDeep').textContent = 'gns ' + slFmtDur(avgDeep);
     if (avgPulse != null) $('slAvgPulse').textContent = 'gns ' + Math.round(avgPulse) + ' bpm';
+    if (avgSleepPulse != null) $('slAvgSleepPulse').textContent = 'gns ' + Math.round(avgSleepPulse) + ' bpm';
 
     $('slUpdated').textContent = 'opdateret ' + new Date().toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
   }
