@@ -1436,6 +1436,12 @@ document.addEventListener('DOMContentLoaded', function () {
   ];
   const SL_COLOR = { deep: '#5B8DEF', light: '#76A9C9', rem: '#A78BFA', restless: '#E07658', awake: '#F2C063' };
   const SL_ORDER = ['deep', 'light', 'rem', 'restless', 'awake'];
+  // Google Health / Fitbit stage type -> internal key
+  const SL_TYPE = { AWAKE: 'awake', WAKE: 'awake', LIGHT: 'light', DEEP: 'deep', REM: 'rem', RESTLESS: 'restless', ASLEEP: 'light' };
+  function slOffsetSec(str) { const m = /(-?\d+)\s*s/i.exec(String(str || '')); return m ? parseInt(m[1], 10) : 0; }
+  // Format an absolute epoch-ms in its own recorded local time (offset applied, read in UTC)
+  function slClockOff(ms, offSec) { const d = new Date(ms + offSec * 1000); return String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0'); }
+  function slDayOff(ms, offSec) { const d = new Date(ms + offSec * 1000); return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`; }
 
   function slParseTime(t) {
     if (t == null) return null;
@@ -1496,37 +1502,72 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // Turn one raw sleep dataPoint into a normalised session, or null.
+  // Fast path = exact Google Health shape (p.sleep.{interval,stages,summary}).
+  // Fallback = generic deep-scan for unknown shapes.
   function slSession(p) {
-    const iv = slFindInterval(p, 0);
-    const segs = [];
-    slCollectSegments(p, segs, 0);
-    // de-dupe + sort segments by start
-    const seen = new Set();
-    const clean = segs.filter(s => {
-      const k = s.stage + '|' + (+s.start) + '|' + (+s.end);
-      if (seen.has(k)) return false; seen.add(k); return true;
-    }).sort((a, b) => a.start - b.start);
+    const s = p && p.sleep;
+    const iv = s && s.interval;
+    if (iv && iv.startTime && iv.endTime) {
+      const startMs = Date.parse(iv.startTime), endMs = Date.parse(iv.endTime);
+      if (isNaN(startMs) || isNaN(endMs) || endMs <= startMs) return slSessionGeneric(p);
+      const startOff = slOffsetSec(iv.startUtcOffset), endOff = slOffsetSec(iv.endUtcOffset || iv.startUtcOffset);
 
-    const stageMin = { deep: 0, light: 0, rem: 0, restless: 0, awake: 0 };
-    clean.forEach(s => { stageMin[s.stage] += (s.end - s.start) / 60000; });
+      const segments = (Array.isArray(s.stages) ? s.stages : []).map(st => {
+        const stage = SL_TYPE[st.type]; if (!stage) return null;
+        const a = Date.parse(st.startTime), b = Date.parse(st.endTime);
+        if (isNaN(a) || isNaN(b) || b <= a) return null;
+        return { stage, startMs: a, endMs: b };
+      }).filter(Boolean).sort((x, y) => x.startMs - y.startMs);
 
-    let start = iv && iv.start, end = iv && iv.end;
-    if ((!start || !end) && clean.length) { start = clean[0].start; end = clean[clean.length - 1].end; }
-    if (!start || !end) return null;
+      const stageMin = { deep: 0, light: 0, rem: 0, restless: 0, awake: 0 };
+      const sum = s.summary || {};
+      if (Array.isArray(sum.stagesSummary) && sum.stagesSummary.length) {
+        sum.stagesSummary.forEach(row => { const k = SL_TYPE[row.type]; if (k) stageMin[k] += Number(row.minutes) || 0; });
+      } else {
+        segments.forEach(g => { stageMin[g.stage] += (g.endMs - g.startMs) / 60000; });
+      }
 
-    const asleep = stageMin.deep + stageMin.light + stageMin.rem;
-    const inBed = (end - start) / 60000;
-    const total = asleep > 0 ? asleep : inBed;
+      const asleep = stageMin.deep + stageMin.light + stageMin.rem;
+      const inBed = Number(sum.minutesInSleepPeriod) || (endMs - startMs) / 60000;
+      const total = Number(sum.minutesAsleep) || asleep || inBed;
+      const eff = inBed > 0 ? (total / inBed) * 100 : null;
 
-    let eff = deepFind(p, /efficiency/i, 0);
-    if (eff == null && (asleep + stageMin.awake + stageMin.restless) > 0) {
-      eff = asleep / (asleep + stageMin.awake + stageMin.restless) * 100;
-    } else if (eff == null && inBed > 0) {
-      eff = total / inBed * 100;
+      const awakenings = (Array.isArray(s.shortAwakenings) ? s.shortAwakenings : []).map(a => {
+        const x = Date.parse(a.startTime), y = Date.parse(a.endTime);
+        return (isNaN(x) || isNaN(y)) ? null : { startMs: x, endMs: y };
+      }).filter(Boolean);
+
+      return {
+        startMs, endMs, startOff, endOff, total, inBed, stageMin, segments, awakenings,
+        restlessCount: awakenings.length, efficiency: eff,
+        mainSleep: !!(s.metadata && s.metadata.mainSleep),
+      };
     }
-    let score = deepFind(p, /(sleep.?score|\bscore\b)/i, 0);
+    return slSessionGeneric(p);
+  }
 
-    return { start, end, total, inBed, stageMin, segments: clean, efficiency: eff, score };
+  // Generic fallback for shapes we don't recognise.
+  function slSessionGeneric(p) {
+    const iv = slFindInterval(p, 0);
+    const segsRaw = [];
+    slCollectSegments(p, segsRaw, 0);
+    const seen = new Set();
+    const segments = segsRaw.filter(g => {
+      const k = g.stage + '|' + (+g.start) + '|' + (+g.end);
+      if (seen.has(k)) return false; seen.add(k); return true;
+    }).sort((a, b) => a.start - b.start).map(g => ({ stage: g.stage, startMs: +g.start, endMs: +g.end }));
+    const stageMin = { deep: 0, light: 0, rem: 0, restless: 0, awake: 0 };
+    segments.forEach(g => { stageMin[g.stage] += (g.endMs - g.startMs) / 60000; });
+    let startMs = iv ? +iv.start : null, endMs = iv ? +iv.end : null;
+    if ((!startMs || !endMs) && segments.length) { startMs = segments[0].startMs; endMs = segments[segments.length - 1].endMs; }
+    if (!startMs || !endMs) return null;
+    const asleep = stageMin.deep + stageMin.light + stageMin.rem;
+    const inBed = (endMs - startMs) / 60000;
+    const total = asleep > 0 ? asleep : inBed;
+    let eff = deepFind(p, /efficiency/i, 0);
+    if (eff == null && (asleep + stageMin.awake) > 0) eff = asleep / (asleep + stageMin.awake) * 100;
+    else if (eff == null && inBed > 0) eff = total / inBed * 100;
+    return { startMs, endMs, startOff: 0, endOff: 0, total, inBed, stageMin, segments, awakenings: [], restlessCount: 0, efficiency: eff, mainSleep: true };
   }
 
   function slDeriveScore(total, eff) {
@@ -1559,42 +1600,48 @@ document.addEventListener('DOMContentLoaded', function () {
     el.innerHTML = svg;
   }
 
-  function slRenderHypnogram(day) {
+  function slRenderHypnogram(sess) {
     const wrap = $('slHypnoWrap');
     if (!wrap) return;
-    if (!day || !day.segments || !day.segments.length) {
+    if (!sess || !sess.segments || !sess.segments.length) {
       wrap.innerHTML = '<div class="sl-hypno-empty">Ingen søvnforløb for i nat endnu.</div>';
       return;
     }
     const lanes = [
-      { keys: ['awake', 'restless'], label: 'Vågen' },
-      { keys: ['rem'], label: 'REM' },
-      { keys: ['light'], label: 'Let' },
-      { keys: ['deep'], label: 'Dyb' },
+      { key: 'awake', label: 'Vågen' },
+      { key: 'rem',   label: 'REM' },
+      { key: 'light', label: 'Let' },
+      { key: 'deep',  label: 'Dyb' },
     ];
-    const laneIdx = {}; lanes.forEach((l, i) => l.keys.forEach(k => laneIdx[k] = i));
-    const t0 = +day.start, t1 = +day.end, span = Math.max(1, t1 - t0);
+    const laneIdx = {}; lanes.forEach((l, i) => { laneIdx[l.key] = i; });
+    laneIdx.restless = laneIdx.awake;
+    const t0 = sess.startMs, t1 = sess.endMs, span = Math.max(1, t1 - t0);
     const W = 320, H = 132, left = 34, top = 6, bottom = 18, plotH = H - top - bottom;
     const laneH = plotH / lanes.length, barH = laneH * 0.62;
+    const X = ms => left + ((ms - t0) / span) * (W - left);
     let svg = `<svg class="sl-hypno" viewBox="0 0 ${W} ${H}" role="img" preserveAspectRatio="none">`;
     lanes.forEach((l, i) => {
       const cy = top + i * laneH + laneH / 2;
       svg += `<line x1="${left}" y1="${cy}" x2="${W}" y2="${cy}" stroke="rgba(255,255,255,0.05)" stroke-width="0.6"/>`;
       svg += `<text x="0" y="${cy + 2.5}" fill="var(--text-tertiary)" font-size="7.5" font-family="var(--font-mono)">${l.label}</text>`;
     });
-    day.segments.forEach(s => {
-      const li = laneIdx[s.stage]; if (li == null) return;
-      const x = left + ((+s.start - t0) / span) * (W - left);
-      const w = Math.max(((s.end - s.start) / span) * (W - left), 0.8);
+    sess.segments.forEach(g => {
+      const li = laneIdx[g.stage]; if (li == null) return;
+      const x = X(g.startMs), w = Math.max(X(g.endMs) - x, 0.8);
       const y = top + li * laneH + (laneH - barH) / 2;
-      svg += `<rect x="${x}" y="${y}" width="${w}" height="${barH}" rx="1.2" fill="${SL_COLOR[s.stage]}"/>`;
+      svg += `<rect x="${x}" y="${y}" width="${w}" height="${barH}" rx="1.2" fill="${SL_COLOR[g.stage]}"/>`;
     });
-    svg += `<text x="${left}" y="${H - 4}" fill="var(--text-tertiary)" font-size="7.5" font-family="var(--font-mono)" text-anchor="start">${slClock(day.start)}</text>`;
-    svg += `<text x="${W}" y="${H - 4}" fill="var(--text-tertiary)" font-size="7.5" font-family="var(--font-mono)" text-anchor="end">${slClock(day.end)}</text>`;
+    // short awakenings ("uro") as thin ticks in the Vågen lane
+    (sess.awakenings || []).forEach(a => {
+      const x = X(a.startMs), w = Math.max(X(a.endMs) - x, 0.7);
+      svg += `<rect x="${x}" y="${top + 1}" width="${w}" height="${barH + 2}" rx="0.6" fill="${SL_COLOR.restless}" opacity="0.85"/>`;
+    });
+    svg += `<text x="${left}" y="${H - 4}" fill="var(--text-tertiary)" font-size="7.5" font-family="var(--font-mono)" text-anchor="start">${slClockOff(sess.startMs, sess.startOff)}</text>`;
+    svg += `<text x="${W}" y="${H - 4}" fill="var(--text-tertiary)" font-size="7.5" font-family="var(--font-mono)" text-anchor="end">${slClockOff(sess.endMs, sess.endOff)}</text>`;
     svg += '</svg>';
     wrap.innerHTML = svg;
     const sub = $('slHypnoSub');
-    if (sub) sub.textContent = `${slClock(day.start)} – ${slClock(day.end)} · ${slFmtDur(day.total)}`;
+    if (sub) sub.textContent = `${slClockOff(sess.startMs, sess.startOff)} – ${slClockOff(sess.endMs, sess.endOff)} · ${slFmtDur(sess.total)} søvn · ${sess.restlessCount || 0} opvågninger`;
   }
 
   function renderSleep(data) {
@@ -1605,56 +1652,57 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    // group sessions by wake-day; keep total (sum) + primary (longest)
+    // group sessions by wake-day (recorded local time); total = sum, primary = main/longest
     const byDay = {};
     sessions.forEach(s => {
-      const key = slLocalDay(s.end);
+      const key = slDayOff(s.endMs, s.endOff);
       (byDay[key] = byDay[key] || []).push(s);
     });
     const days = Object.keys(byDay).sort().slice(-7).map(date => {
-      const list = byDay[date].sort((a, b) => b.total - a.total);
+      const list = byDay[date].slice().sort((a, b) => (b.mainSleep - a.mainSleep) || (b.total - a.total));
       const primary = list[0];
       const total = list.reduce((n, s) => n + s.total, 0);
       const stageMin = { deep: 0, light: 0, rem: 0, restless: 0, awake: 0 };
-      list.forEach(s => SL_ORDER.forEach(k => { stageMin[k] += s.stageMin[k]; }));
+      let restlessCount = 0;
+      list.forEach(s => { SL_ORDER.forEach(k => { stageMin[k] += s.stageMin[k]; }); restlessCount += s.restlessCount; });
       const eff = primary.efficiency;
-      const score = primary.score != null ? Math.round(primary.score) : slDeriveScore(total, eff);
-      return { date, primary, total, stageMin, efficiency: eff, score, segments: primary.segments, start: primary.start, end: primary.end };
+      const score = slDeriveScore(total, eff);
+      return { date, primary, total, stageMin, restlessCount, efficiency: eff, score };
     });
 
     const last = days[days.length - 1];
+    const lp = last.primary;
 
     // ---- Summary (last night) ----
     if (last.score != null) {
       $('slScore').textContent = last.score;
-      const c = 320.44;
-      $('slRingFill').style.strokeDashoffset = String(c * (1 - Math.max(0, Math.min(1, last.score / 100))));
+      $('slRingFill').style.strokeDashoffset = String(320.44 * (1 - Math.max(0, Math.min(1, last.score / 100))));
     }
     $('slDuration').textContent = slFmtDur(last.total);
     $('slEff').textContent = last.efficiency != null ? Math.round(last.efficiency) : '—';
-    $('slBedtime').textContent = slClock(last.start);
-    $('slWake').textContent = '→ ' + slClock(last.end);
+    $('slBedtime').textContent = slClockOff(lp.startMs, lp.startOff);
+    $('slWake').textContent = '→ ' + slClockOff(lp.endMs, lp.endOff);
 
-    // ---- Stage bar (last night) ----
-    const sm = last.stageMin, sTot = SL_ORDER.reduce((n, k) => n + sm[k], 0);
+    // ---- Stage bar (last night): deep / light / rem / awake, uro = # opvågninger ----
+    const sm = last.stageMin, sTot = sm.deep + sm.light + sm.rem + sm.awake;
     if (sTot > 0) {
       $('slStagesBlock').style.display = '';
       const pct = k => (sm[k] / sTot * 100);
       $('slSegDeep').style.width = pct('deep') + '%';
       $('slSegLight').style.width = pct('light') + '%';
       $('slSegRem').style.width = pct('rem') + '%';
-      $('slSegRestless').style.width = pct('restless') + '%';
+      $('slSegRestless').style.width = '0%';
       $('slSegAwake').style.width = pct('awake') + '%';
       $('slDeepTxt').textContent = ' ' + slFmtDur(sm.deep);
       $('slLightTxt').textContent = ' ' + slFmtDur(sm.light);
       $('slRemTxt').textContent = ' ' + slFmtDur(sm.rem);
-      $('slRestlessTxt').textContent = ' ' + slFmtDur(sm.restless);
+      $('slRestlessTxt').textContent = ' ' + last.restlessCount + '×';
       $('slAwakeTxt').textContent = ' ' + slFmtDur(sm.awake);
-      $('slStagesMeta').textContent = slFmtDur(sTot) + ' i søvn';
+      $('slStagesMeta').textContent = slFmtDur(sm.deep + sm.light + sm.rem) + ' i søvn';
     }
 
     // ---- Hypnogram (last night) ----
-    slRenderHypnogram(last);
+    slRenderHypnogram(lp);
 
     // ---- 7-day charts ----
     const lbl = d => slWeekday(d.date);
