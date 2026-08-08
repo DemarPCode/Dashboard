@@ -222,7 +222,8 @@ main {
 .sl-line-svg { width: 100%; height: auto; display: block; overflow: visible; }
 .sl-line-grid { stroke: rgba(255,255,255,0.05); stroke-width: 0.6; }
 .sl-line-x { fill: var(--text-tertiary); font-size: 7px; font-family: var(--font-mono); }
-.sl-line-val { fill: var(--text-primary); font-size: 9px; font-weight: 700; font-family: var(--font-mono); }
+.sl-line-ax { fill: var(--text-tertiary); font-size: 6.5px; font-family: var(--font-mono); opacity: 0.85; }
+.sl-line-val { fill: var(--text-primary); font-size: 7px; font-weight: 700; font-family: var(--font-mono); }
 .sl-line-path { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .sl-score-est { font-size: 9px; color: var(--text-tertiary); font-weight: 500; letter-spacing: 0; text-transform: none; }
 
@@ -1619,26 +1620,35 @@ document.addEventListener('DOMContentLoaded', function () {
     el.innerHTML = svg;
   }
 
-  // Line chart (weekly trend, app-style): connected dots + soft area + weekday axis.
-  // items: [{label, value, display}]. opts: {color, min, max, floor0, dotColor(v)->color}
+  // Line chart (weekly trend, app-style): connected dots + soft area + weekday
+  // axis + Y-axis tick labels + a value label on every day.
+  // items: [{label, value, display}].
+  // opts: {color, min, max, floor0, dotColor(v)->color, axisFmt(v)->string}
   function slRenderLine(containerId, items, opts) {
     const el = $(containerId);
     if (!el) return;
     const vals = items.map(i => (i.value == null || isNaN(i.value)) ? null : i.value);
     const nums = vals.filter(v => v != null);
     if (!nums.length) { el.innerHTML = '<div class="sl-chart-empty">Ingen data endnu</div>'; return; }
-    let max = opts.max != null ? opts.max : Math.max.apply(null, nums);
-    let min = opts.min != null ? opts.min : Math.min.apply(null, nums);
-    if (max === min) { max += 1; min -= 1; }
-    const pad = (max - min) * 0.18; max += pad; min -= pad;
-    if (opts.floor0 && min < 0) min = 0;
-    const W = 300, H = 118, left = 8, right = 8, top = 16, bottom = 20;
-    const plotW = W - left - right, plotH = H - top - bottom, n = items.length;
-    const X = i => left + (n === 1 ? plotW / 2 : (i / (n - 1)) * plotW);
-    const Y = v => top + plotH - ((v - min) / (max - min)) * plotH;
+    let dmax = Math.max.apply(null, nums), dmin = Math.min.apply(null, nums);
+    if (dmax === dmin) { dmax += 1; dmin -= 1; }
+    const pad = (dmax - dmin) * 0.22;
+    let axMax = opts.max != null ? opts.max : dmax + pad;
+    let axMin = opts.min != null ? opts.min : dmin - pad;
+    if (opts.floor0 && axMin < 0) axMin = 0;
+    if (axMax === axMin) axMax = axMin + 1;
+    const axisFmt = opts.axisFmt || (v => String(Math.round(v)));
+    const W = 320, H = 132, axisW = 28, right = 8, top = 15, bottom = 19;
+    const plotL = axisW, plotW = W - axisW - right, plotH = H - top - bottom, n = items.length;
+    const X = i => plotL + (n === 1 ? plotW / 2 : (i / (n - 1)) * plotW);
+    const Y = v => top + plotH - ((v - axMin) / (axMax - axMin)) * plotH;
     let svg = `<svg class="sl-line-svg" viewBox="0 0 ${W} ${H}" role="img">`;
-    // gridlines
-    [0, 0.5, 1].forEach(g => { const y = top + plotH * g; svg += `<line class="sl-line-grid" x1="${left}" y1="${y.toFixed(1)}" x2="${W - right}" y2="${y.toFixed(1)}"/>`; });
+    // gridlines + Y-axis labels
+    [0, 0.5, 1].forEach(g => {
+      const y = top + plotH * g, val = axMax - g * (axMax - axMin);
+      svg += `<line class="sl-line-grid" x1="${plotL}" y1="${y.toFixed(1)}" x2="${W - right}" y2="${y.toFixed(1)}"/>`;
+      svg += `<text class="sl-line-ax" x="${plotL - 4}" y="${(y + 2).toFixed(1)}" text-anchor="end">${axisFmt(val)}</text>`;
+    });
     const pts = [];
     let d = '';
     vals.forEach((v, i) => { if (v == null) return; const x = X(i), y = Y(v); pts.push({ x, y, v, i }); d += (d ? ' L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1); });
@@ -1647,46 +1657,42 @@ document.addEventListener('DOMContentLoaded', function () {
       svg += `<path d="${area}" fill="${opts.color}" opacity="0.10"/>`;
     }
     svg += `<path class="sl-line-path" d="${d}" stroke="${opts.color}"/>`;
+    // dots + a value label on every point (nudged above, or below when near the top)
     pts.forEach((p, idx) => {
       const last = idx === pts.length - 1;
       const col = opts.dotColor ? opts.dotColor(p.v) : opts.color;
-      svg += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${last ? 3.4 : 2.3}" fill="${col}"${last ? ` stroke="${opts.color}" stroke-width="1.5"` : ''}/>`;
+      svg += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${last ? 3.2 : 2.2}" fill="${col}"${last ? ` stroke="${opts.color}" stroke-width="1.3"` : ''}/>`;
+      const it = items[p.i];
+      if (it && it.display != null && it.display !== '') {
+        const above = p.y - top > 12;
+        const ly = above ? p.y - 5 : p.y + 8;
+        svg += `<text class="sl-line-val" x="${p.x.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle">${it.display}</text>`;
+      }
     });
-    // latest value label
-    const lastP = pts[pts.length - 1], lastIt = items[lastP.i];
-    if (lastIt && lastIt.display != null && lastIt.display !== '') {
-      const anchor = lastP.x > W - 42 ? 'end' : 'middle';
-      const lx = anchor === 'end' ? lastP.x - 4 : lastP.x;
-      svg += `<text class="sl-line-val" x="${lx.toFixed(1)}" y="${Math.max(lastP.y - 6, 9).toFixed(1)}" text-anchor="${anchor}">${lastIt.display}</text>`;
-    }
     // weekday axis
     items.forEach((it, i) => { svg += `<text class="sl-line-x" x="${X(i).toFixed(1)}" y="${H - 5}" text-anchor="middle">${it.label}</text>`; });
     svg += '</svg>';
     el.innerHTML = svg;
   }
 
-  // Resting-heart-rate 7-day series (defensive: shapes vary).
+  // Resting-heart-rate 7-day series -> { 'YYYY-MM-DD': bpm }.
+  // Exact Google Health shape: p.dailyRestingHeartRate.{date:{year,month,day}, beatsPerMinute}.
   function slPulseDays(arr) {
     if (!Array.isArray(arr)) return {};
     const byDay = {};
     arr.forEach(p => {
+      const r = p && p.dailyRestingHeartRate;
+      if (r && r.date && r.beatsPerMinute != null) {
+        const d = r.date, bpm = Math.round(Number(r.beatsPerMinute));
+        if (!isNaN(bpm)) byDay[`${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`] = bpm;
+        return;
+      }
       const iv = slFindInterval(p, 0);
-      let ms = iv ? iv.end : null;
-      if (ms == null) { const t = deepFindTime(p, 0); ms = t; }
+      const ms = iv ? iv.end : null;
       const bpm = deepFind(p, /resting|beatsPerMinute|bpm/i, 0);
-      if (ms == null || bpm == null) return;
-      const key = slDayOff(+ms, 0);
-      byDay[key] = Math.round(bpm); // last write wins (latest per day)
+      if (ms != null && bpm != null) byDay[slDayOff(+ms, 0)] = Math.round(bpm);
     });
     return byDay;
-  }
-  function deepFindTime(obj, depth) {
-    if (obj == null || (depth || 0) > 6 || typeof obj !== 'object') return null;
-    for (const k of Object.keys(obj)) {
-      if (/time|date|end|start/i.test(k) && typeof obj[k] === 'string') { const t = Date.parse(obj[k]); if (!isNaN(t)) return t; }
-    }
-    for (const k of Object.keys(obj)) { const r = deepFindTime(obj[k], (depth || 0) + 1); if (r != null) return r; }
-    return null;
   }
 
   function slRenderHypnogram(sess) {
@@ -1796,12 +1802,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // ---- 7-day charts (app-style line charts) ----
     const lbl = d => slWeekday(d.date);
     const scoreBand = v => v >= 90 ? '#6BE3A4' : v >= 80 ? '#5AB6C9' : v >= 60 ? '#F2C063' : '#FF6B6B';
-    slRenderLine('slChartHours',   days.map(d => ({ label: lbl(d), value: d.total,         display: slFmtDur(d.total) })),          { color: '#A78BFA' });
+    const hAxis = v => (Math.round(v / 6) / 10) + 't';   // minutes -> "7.5t" on the Y-axis
+    slRenderLine('slChartHours',   days.map(d => ({ label: lbl(d), value: d.total,         display: slFmtDur(d.total) })),          { color: '#A78BFA', axisFmt: hAxis });
     slRenderLine('slChartScore',   days.map(d => ({ label: lbl(d), value: d.score,         display: d.score })),                    { color: '#5AB6C9', min: 0, max: 100, dotColor: scoreBand });
-    slRenderLine('slChartPrimary', days.map(d => ({ label: lbl(d), value: d.primary.total, display: slFmtDur(d.primary.total) })),  { color: '#7DD3FC' });
-    slRenderLine('slChartEff',     days.map(d => ({ label: lbl(d), value: d.efficiency != null ? Math.round(d.efficiency) : null, display: d.efficiency != null ? Math.round(d.efficiency) + '%' : '' })), { color: '#F2C063', max: 100 });
-    slRenderLine('slChartRem',     days.map(d => ({ label: lbl(d), value: d.stageMin.rem,  display: slFmtDur(d.stageMin.rem) })),   { color: SL_COLOR.rem, floor0: true });
-    slRenderLine('slChartDeep',    days.map(d => ({ label: lbl(d), value: d.stageMin.deep, display: slFmtDur(d.stageMin.deep) })),  { color: SL_COLOR.deep, floor0: true });
+    slRenderLine('slChartPrimary', days.map(d => ({ label: lbl(d), value: d.primary.total, display: slFmtDur(d.primary.total) })),  { color: '#7DD3FC', axisFmt: hAxis });
+    slRenderLine('slChartEff',     days.map(d => ({ label: lbl(d), value: d.efficiency != null ? Math.round(d.efficiency) : null, display: d.efficiency != null ? Math.round(d.efficiency) + '%' : '' })), { color: '#F2C063', max: 100, axisFmt: v => Math.round(v) + '%' });
+    slRenderLine('slChartRem',     days.map(d => ({ label: lbl(d), value: d.stageMin.rem,  display: slFmtDur(d.stageMin.rem) })),   { color: SL_COLOR.rem, floor0: true, axisFmt: hAxis });
+    slRenderLine('slChartDeep',    days.map(d => ({ label: lbl(d), value: d.stageMin.deep, display: slFmtDur(d.stageMin.deep) })),  { color: SL_COLOR.deep, floor0: true, axisFmt: hAxis });
 
     // Pulse (resting heart rate) aligned to the same 7 wake-days
     const pulseMap = slPulseDays(data['daily-resting-heart-rate']);
