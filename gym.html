@@ -1444,6 +1444,48 @@ img, video, canvas, svg { max-width: 100%; }
     </button>
   </div>
 
+  <style>
+  .act-section { margin: 0 0 4px; }
+  .act-loading, .act-empty { color: var(--text-3); font-size: 13px; padding: 14px 2px; font-style: italic; }
+  .act-list { display: flex; flex-direction: column; gap: 8px; }
+  .act-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; transition: border-color 0.18s; }
+  .act-item.open { border-color: var(--border-strong); }
+  .act-head { display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 13px 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .act-icon { width: 40px; height: 40px; border-radius: 11px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 19px; }
+  .act-hmid { min-width: 0; }
+  .act-title { font-size: 14.5px; font-weight: 700; color: var(--text-1); letter-spacing: -0.01em; }
+  .act-sub { font-size: 11.5px; color: var(--text-3); margin-top: 2px; font-family: var(--font-mono); }
+  .act-quick { display: flex; align-items: center; gap: 10px; }
+  .act-quick-v { font-size: 12px; color: var(--text-2); font-family: var(--font-mono); font-weight: 600; white-space: nowrap; }
+  .act-chev { color: var(--text-4); font-size: 13px; transition: transform 0.22s cubic-bezier(0.22,1,0.36,1); }
+  .act-item.open .act-chev { transform: rotate(90deg); }
+  .act-detail { display: none; padding: 4px 14px 16px; border-top: 1px solid var(--border); }
+  .act-item.open .act-detail { display: block; }
+  .act-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin: 14px 0 4px; }
+  .act-metric { background: rgba(255,255,255,0.025); border-radius: 10px; padding: 10px 8px; text-align: center; }
+  .act-m-label { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); margin-bottom: 5px; }
+  .act-m-value { font-size: 15px; font-weight: 700; color: var(--text-1); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  .act-m-value small { font-size: 10px; color: var(--text-3); font-weight: 600; }
+  .act-block-h { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); margin: 16px 0 9px; }
+  .act-zone-bar { display: flex; height: 12px; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.05); margin-bottom: 10px; }
+  .act-zone-seg { height: 100%; }
+  .act-zone-legend { display: grid; grid-template-columns: repeat(2,1fr); gap: 6px 12px; }
+  .act-zone-row { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-2); }
+  .act-zone-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .act-zone-t { margin-left: auto; font-family: var(--font-mono); color: var(--text-1); font-weight: 600; font-size: 11px; }
+  .act-splits { display: flex; flex-direction: column; gap: 4px; }
+  .act-split { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; font-size: 12px; color: var(--text-2); padding: 5px 10px; background: rgba(255,255,255,0.025); border-radius: 8px; font-family: var(--font-mono); }
+  .act-split-i { color: var(--text-3); }
+  .act-split-sp { color: var(--text-1); font-weight: 600; }
+  .act-more { width: 100%; margin-top: 10px; padding: 9px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text-2); font-family: var(--font); font-size: 12px; font-weight: 600; cursor: pointer; }
+  .act-more:hover { background: rgba(255,255,255,0.04); color: var(--text-1); }
+  </style>
+
+  <div class="wt-section act-section">
+    <div class="wt-divider"><span>SENESTE AKTIVITETER</span></div>
+    <div class="act-list" id="actList"><div class="act-loading">Henter aktiviteter…</div></div>
+  </div>
+
   <div class="card">
     <!-- Filters -->
     <div class="po-filters">
@@ -3523,5 +3565,175 @@ img, video, canvas, svg { max-width: 100%; }
 })();
 </script>
 
+<script>
+/* ===== Seneste aktiviteter (Fitbit / Google Health exercise data) ===== */
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const listEl = $('actList');
+  if (!listEl) return;
+
+  const WD = ['søn', 'man', 'tir', 'ons', 'tor', 'fre', 'lør'];
+  const MON = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+  const ZONES = [
+    { key: 'lightTime', label: 'Let', color: '#5AB6C9' },
+    { key: 'moderateTime', label: 'Moderat', color: '#6ee7b7' },
+    { key: 'vigorousTime', label: 'Hård', color: '#fbbf24' },
+    { key: 'peakTime', label: 'Peak', color: '#ff8a8a' },
+  ];
+  const TYPE_META = {
+    WALKING: { icon: '🚶', label: 'Gåtur' },
+    RUNNING: { icon: '🏃', label: 'Løb' },
+    TREADMILL: { icon: '🏃', label: 'Løbebånd' },
+    BIKING: { icon: '🚴', label: 'Cykling' },
+    CARDIO_WORKOUT: { icon: '🔥', label: 'Cardio' },
+  };
+
+  const offSec = (s) => { const m = /(-?\d+)\s*s/i.exec(String(s || '')); return m ? parseInt(m[1], 10) : 0; };
+  const secOf = (s) => parseFloat(String(s || '').replace('s', '')) || 0;
+  function localParts(iso, offStr) {
+    const t = Date.parse(iso); if (isNaN(t)) return null;
+    const d = new Date(t + offSec(offStr) * 1000);
+    const hh = String(d.getUTCHours()).padStart(2, '0'), mm = String(d.getUTCMinutes()).padStart(2, '0');
+    return { time: `${hh}:${mm}`, date: `${WD[d.getUTCDay()]}. ${d.getUTCDate()}. ${MON[d.getUTCMonth()]}`, ms: t };
+  }
+  function fmtDur(sec) {
+    const m = Math.round(sec / 60);
+    if (m < 60) return m + ' min';
+    return Math.floor(m / 60) + 't ' + (m % 60) + 'm';
+  }
+  function fmtKm(mm) { return (mm / 1e6).toFixed(2).replace('.', ',') + ' km'; }
+  function fmtPace(secPerM) {
+    if (!secPerM || secPerM <= 0) return null;
+    const perKm = secPerM * 1000;
+    const mn = Math.floor(perKm / 60), sc = Math.round(perKm % 60);
+    return `${mn}:${String(sc).padStart(2, '0')} /km`;
+  }
+  const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  function metric(label, value, unit) {
+    if (value == null || value === '') return '';
+    return `<div class="act-metric"><div class="act-m-label">${label}</div><div class="act-m-value">${value}${unit ? ` <small>${unit}</small>` : ''}</div></div>`;
+  }
+
+  function zoneBlock(z) {
+    if (!z) return '';
+    const secs = ZONES.map(zo => secOf(z[zo.key]));
+    const total = secs.reduce((a, b) => a + b, 0);
+    if (total <= 0) return '';
+    let bar = '<div class="act-zone-bar">';
+    ZONES.forEach((zo, i) => { if (secs[i] > 0) bar += `<div class="act-zone-seg" style="width:${(secs[i] / total * 100).toFixed(2)}%;background:${zo.color}"></div>`; });
+    bar += '</div>';
+    let legend = '<div class="act-zone-legend">';
+    ZONES.forEach((zo, i) => { legend += `<div class="act-zone-row"><span class="act-zone-dot" style="background:${zo.color}"></span>${zo.label}<span class="act-zone-t">${Math.round(secs[i] / 60)}m</span></div>`; });
+    legend += '</div>';
+    return `<div class="act-block-h">Pulszoner</div>${bar}${legend}`;
+  }
+
+  function splitsBlock(splits) {
+    if (!Array.isArray(splits) || !splits.length) return '';
+    let rows = '';
+    splits.forEach((sp, i) => {
+      const dist = (sp.metricsSummary && sp.metricsSummary.distanceMillimeters) || 0;
+      const spd = (sp.metricsSummary && sp.metricsSummary.averageSpeedMillimetersPerSecond) || 0;
+      const dur = secOf(sp.activeDuration);
+      const kmh = spd > 0 ? (spd * 0.0036).toFixed(1).replace('.', ',') + ' km/t' : '';
+      const mn = Math.floor(dur / 60), sc = Math.round(dur % 60);
+      rows += `<div class="act-split"><span class="act-split-i">${(dist / 1e6).toFixed(1).replace('.', ',')} km</span><span>${mn}:${String(sc).padStart(2, '0')}</span><span class="act-split-sp">${kmh}</span></div>`;
+    });
+    return `<div class="act-block-h">Splits</div><div class="act-splits">${rows}</div>`;
+  }
+
+  function itemHTML(p, idx) {
+    const e = p.exercise || {};
+    const m = e.metricsSummary || {};
+    const iv = e.interval || {};
+    const meta = TYPE_META[e.exerciseType] || { icon: '🏋️', label: e.displayName || 'Aktivitet' };
+    const name = e.displayName || meta.label;
+    const lp = localParts(iv.startTime, iv.startUtcOffset) || { time: '', date: '' };
+    const dur = secOf(e.activeDuration);
+    const dist = m.distanceMillimeters ? Number(m.distanceMillimeters) : null;
+    const cal = m.caloriesKcal != null ? Math.round(Number(m.caloriesKcal)) : null;
+    const hr = m.averageHeartRateBeatsPerMinute ? Math.round(Number(m.averageHeartRateBeatsPerMinute)) : null;
+    const steps = m.steps ? parseInt(m.steps, 10) : null;
+    const pace = fmtPace(Number(m.averagePaceSecondsPerMeter));
+    const azm = m.activeZoneMinutes ? parseInt(m.activeZoneMinutes, 10) : null;
+
+    // quick stats (collapsed): duration + distance-or-calories + HR
+    const quick = [];
+    quick.push(fmtDur(dur));
+    if (dist) quick.push(fmtKm(dist)); else if (cal != null) quick.push(cal + ' kcal');
+    if (hr != null) quick.push('❤ ' + hr);
+
+    const grid =
+      metric('Varighed', fmtDur(dur)) +
+      (dist ? metric('Distance', fmtKm(dist)) : '') +
+      (cal != null ? metric('Kalorier', cal, 'kcal') : '') +
+      (hr != null ? metric('Gns. puls', hr, 'bpm') : '') +
+      (pace ? metric('Tempo', pace) : '') +
+      (steps != null ? metric('Skridt', steps.toLocaleString('da-DK')) : '') +
+      (azm != null ? metric('Zoneminutter', azm) : '');
+
+    return `<div class="act-item" data-i="${idx}">
+      <div class="act-head" role="button" tabindex="0">
+        <div class="act-icon">${meta.icon}</div>
+        <div class="act-hmid">
+          <div class="act-title">${esc(name)}</div>
+          <div class="act-sub">${lp.date} · ${lp.time}</div>
+        </div>
+        <div class="act-quick"><span class="act-quick-v">${quick.join(' · ')}</span><span class="act-chev">›</span></div>
+      </div>
+      <div class="act-detail">
+        <div class="act-grid">${grid}</div>
+        ${zoneBlock(m.heartRateZoneDurations)}
+        ${splitsBlock(e.splits)}
+      </div>
+    </div>`;
+  }
+
+  function render(points) {
+    const acts = points
+      .filter(p => p && p.exercise && p.exercise.interval && p.exercise.interval.startTime)
+      .map(p => ({ p, ms: Date.parse(p.exercise.interval.startTime) }))
+      .filter(x => !isNaN(x.ms))
+      .sort((a, b) => b.ms - a.ms);
+    if (!acts.length) { listEl.innerHTML = '<div class="act-empty">Ingen aktiviteter fundet endnu.</div>'; return; }
+    const SHOWN = 8;
+    let shown = SHOWN;
+    function paint() {
+      listEl.innerHTML = acts.slice(0, shown).map((x, i) => itemHTML(x.p, i)).join('') +
+        (shown < acts.length ? `<button class="act-more" id="actMore">Vis flere (${acts.length - shown})</button>` : '');
+      const more = $('actMore');
+      if (more) more.addEventListener('click', () => { shown = Math.min(shown + SHOWN, acts.length); paint(); });
+    }
+    paint();
+  }
+
+  listEl.addEventListener('click', (ev) => {
+    const head = ev.target.closest('.act-head');
+    if (!head) return;
+    head.parentElement.classList.toggle('open');
+  });
+  listEl.addEventListener('keydown', (ev) => {
+    if (ev.key !== 'Enter' && ev.key !== ' ') return;
+    const head = ev.target.closest('.act-head');
+    if (!head) return;
+    ev.preventDefault();
+    head.parentElement.classList.toggle('open');
+  });
+
+  async function load() {
+    try {
+      const r = await fetch('/api/health?type=exercise');
+      const j = await r.json();
+      const points = (j && j.body && j.body.dataPoints) || [];
+      render(points);
+    } catch (e) {
+      listEl.innerHTML = '<div class="act-empty">Kunne ikke hente aktiviteter.</div>';
+    }
+  }
+  load();
+})();
+</script>
 </body>
 </html>
