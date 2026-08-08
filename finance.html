@@ -112,13 +112,17 @@ body::after {
   bottom: 0; left: 0; right: 0;
   z-index: 100;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 4px;
   padding: 8px max(12px, env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-right));
   background: linear-gradient(180deg, transparent, rgba(5,5,6,0.92) 30%);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
 }
+.bottom-tabs::-webkit-scrollbar { display: none; }
 .bottom-tabs::before {
   content: '';
   position: absolute;
@@ -128,7 +132,8 @@ body::after {
   pointer-events: none;
 }
 .bot-tab {
-  flex: 1; max-width: 140px;
+  flex: 0 0 auto; min-width: 72px;
+  scroll-snap-align: center;
   display: flex; flex-direction: column; align-items: center; gap: 2px;
   background: transparent;
   border: 1px solid transparent;
@@ -1869,6 +1874,174 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   </div>
 </div>
 
+<style>
+/* ===== Finance upgrade (Portefølje / Konti / Skat / AI) ===== */
+.fin-pos { color: var(--success); } .fin-neg { color: var(--danger); }
+.fin-hero { background: var(--bg-card); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 14px; box-shadow: var(--glass-shadow); }
+.fin-hero-label { font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-tertiary); }
+.fin-hero-val { font-size: 32px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; line-height: 1.1; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.fin-hero-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 5px; font-family: var(--font-mono); }
+.fin-hero-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.fin-refresh { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); color: var(--text-primary); border-radius: 999px; padding: 8px 14px; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+.fin-refresh:hover { background: rgba(255,255,255,0.12); }
+.fin-refresh.spin .fin-refresh-i { animation: finspin 0.8s linear infinite; }
+@keyframes finspin { to { transform: rotate(360deg); } }
+.fin-refresh-i { display: inline-block; }
+
+.fin-card { background: var(--bg-card); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 14px; box-shadow: var(--glass-shadow); }
+.fin-h { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 12px; }
+.fin-form { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.fin-input, .fin-select { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-md); padding: 10px 12px; color: var(--text-primary); font-family: inherit; font-size: 13px; }
+.fin-input::placeholder { color: var(--text-quaternary); }
+.fin-input:focus, .fin-select:focus { outline: none; border-color: rgba(255,255,255,0.22); }
+.fin-span2 { grid-column: span 2; }
+.fin-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); color: var(--text-primary); border-radius: var(--radius-md); padding: 10px 14px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+.fin-btn:hover { background: rgba(255,255,255,0.12); }
+.fin-btn-primary { background: var(--accent); border-color: transparent; color: #1a0f0a; }
+.fin-btn-primary:hover { filter: brightness(1.08); }
+
+.fin-hold { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 12px 4px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.fin-hold:last-child { border-bottom: 0; }
+.fin-hold-name { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.fin-hold-meta { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; font-family: var(--font-mono); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.fin-chip { font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em; padding: 2px 7px; border-radius: 999px; text-transform: uppercase; }
+.fin-hold-val { text-align: right; font-variant-numeric: tabular-nums; }
+.fin-hold-v1 { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.fin-hold-v2 { font-size: 11px; margin-top: 3px; font-family: var(--font-mono); }
+.fin-hold-del { background: transparent; border: 1px solid rgba(255,255,255,0.10); color: var(--text-tertiary); border-radius: 8px; width: 30px; height: 30px; cursor: pointer; font-size: 15px; }
+.fin-hold-del:hover { color: var(--danger); border-color: rgba(255,107,107,0.4); }
+.fin-empty { color: var(--text-quaternary); font-style: italic; font-size: 13px; padding: 14px 4px; }
+
+.fin-pies { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 640px) { .fin-pies { grid-template-columns: 1fr; } }
+.fin-pie-card { background: rgba(255,255,255,0.02); border-radius: var(--radius-md); padding: 14px; }
+.fin-pie-title { font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 10px; text-align: center; }
+.fin-pie-svg { width: 116px; height: 116px; display: block; margin: 0 auto 12px; }
+.fin-legend { display: flex; flex-direction: column; gap: 6px; }
+.fin-legend-row { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--text-secondary); }
+.fin-legend-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+.fin-legend-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fin-legend-pct { margin-left: auto; font-family: var(--font-mono); color: var(--text-primary); font-weight: 700; font-size: 11px; }
+
+/* daily development calendar heatmap */
+.fin-cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.fin-cal-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.fin-cal-nav { display: flex; gap: 6px; }
+.fin-cal-btn { width: 30px; height: 30px; border-radius: 999px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: var(--text-secondary); cursor: pointer; font-size: 13px; }
+.fin-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.fin-cal-dow { font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-quaternary); text-align: center; padding-bottom: 2px; }
+.fin-cal-cell { aspect-ratio: 1; border-radius: 7px; background: rgba(255,255,255,0.03); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 2px; }
+.fin-cal-d { font-size: 10px; color: var(--text-tertiary); font-weight: 600; }
+.fin-cal-pct { font-size: 8.5px; font-family: var(--font-mono); font-weight: 700; }
+.fin-cal-empty { visibility: hidden; }
+.fin-cal-stats { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; margin-top: 12px; }
+.fin-stat { background: rgba(255,255,255,0.025); border-radius: var(--radius-md); padding: 12px; }
+.fin-stat-l { font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
+.fin-stat-v { font-size: 18px; font-weight: 700; margin-top: 5px; font-variant-numeric: tabular-nums; }
+
+.fin-note { font-size: 11.5px; color: var(--text-tertiary); line-height: 1.5; background: rgba(255,255,255,0.02); border-radius: var(--radius-md); padding: 12px 14px; margin-top: 10px; }
+.fin-note b { color: var(--text-secondary); }
+
+/* AI advisor */
+.fin-chat { display: flex; flex-direction: column; gap: 10px; min-height: 240px; }
+.fin-msg { max-width: 88%; padding: 11px 14px; border-radius: 14px; font-size: 13.5px; line-height: 1.5; white-space: pre-wrap; }
+.fin-msg.user { align-self: flex-end; background: var(--accent); color: #1a0f0a; border-bottom-right-radius: 4px; }
+.fin-msg.bot { align-self: flex-start; background: rgba(255,255,255,0.05); color: var(--text-primary); border-bottom-left-radius: 4px; }
+.fin-msg.bot a { color: var(--accent); }
+.fin-chat-input { display: flex; gap: 8px; margin-top: 12px; }
+.fin-chat-input .fin-input { flex: 1; }
+</style>
+
+<!-- ===== PORTEFØLJE ===== -->
+<div class="section" data-section="port" hidden>
+  <div class="section-title"><span class="section-title-text">PORTEFØLJE</span></div>
+
+  <div class="fin-hero">
+    <div class="fin-hero-row">
+      <div>
+        <div class="fin-hero-label">Porteføljeværdi</div>
+        <div class="fin-hero-val" id="finPortVal">DKK 0</div>
+        <div class="fin-hero-sub" id="finPortSub">Tilføj din første aktie nedenfor</div>
+      </div>
+      <button class="fin-refresh" id="finRefresh"><span class="fin-refresh-i">⟳</span> Opdatér kurser</button>
+    </div>
+  </div>
+
+  <div class="fin-hero" style="margin-top:-6px">
+    <div class="fin-hero-label">Net worth</div>
+    <div class="fin-hero-val" id="finNetWorth">DKK 0</div>
+    <div class="fin-hero-sub" id="finNetWorthSub">portefølje + konti</div>
+  </div>
+
+  <div class="fin-card">
+    <div class="fin-h">Tilføj beholdning</div>
+    <div class="fin-form">
+      <input class="fin-input fin-span2" id="phName" type="text" placeholder="Navn (fx Novo Nordisk B)" autocomplete="off" />
+      <input class="fin-input" id="phTicker" type="text" placeholder="Ticker (fx NOVO-B.CO)" autocomplete="off" spellcheck="false" />
+      <input class="fin-input" id="phShares" type="number" inputmode="decimal" placeholder="Antal" />
+      <input class="fin-input" id="phGak" type="number" inputmode="decimal" placeholder="GAK / købskurs (DKK)" />
+      <input class="fin-input" id="phManual" type="number" inputmode="decimal" placeholder="Manuel kurs (hvis ingen ticker)" />
+      <input class="fin-input" id="phDepot" type="text" placeholder="Depot (fx Nordnet)" list="phDepotList" autocomplete="off" />
+      <datalist id="phDepotList"></datalist>
+      <select class="fin-select" id="phType">
+        <option value="aktiedepot">Aktiedepot</option>
+        <option value="ask">Aktiesparekonto</option>
+        <option value="boern">Børneopsparing</option>
+        <option value="opsparing">Opsparing</option>
+      </select>
+      <button class="fin-btn fin-btn-primary fin-span2" id="phAdd">+ Tilføj beholdning</button>
+    </div>
+    <div class="fin-note" id="phTip">💡 Ticker skal matche Yahoo Finance. Københavns-aktier ender på <b>.CO</b> (fx NOVO-B.CO, DSV.CO), amerikanske bruger symbolet direkte (fx AAPL). Ingen ticker? Sæt en manuel kurs.</div>
+  </div>
+
+  <div class="fin-card">
+    <div class="fin-h">Beholdninger</div>
+    <div id="phList"><div class="fin-empty">Ingen beholdninger endnu.</div></div>
+  </div>
+
+  <div class="fin-card">
+    <div class="fin-h">Fordeling</div>
+    <div class="fin-pies">
+      <div class="fin-pie-card"><div class="fin-pie-title">Pr. aktie</div><div id="pieStock"></div></div>
+      <div class="fin-pie-card"><div class="fin-pie-title">Pr. depot</div><div id="pieDepot"></div></div>
+      <div class="fin-pie-card"><div class="fin-pie-title">Pr. kontotype</div><div id="pieType"></div></div>
+    </div>
+  </div>
+
+  <div class="fin-card">
+    <div class="fin-cal-head">
+      <div class="fin-cal-title" id="finCalTitle">Udvikling</div>
+      <div class="fin-cal-nav"><button class="fin-cal-btn" id="finCalPrev">‹</button><button class="fin-cal-btn" id="finCalNext">›</button></div>
+    </div>
+    <div id="finCal"></div>
+    <div class="fin-cal-stats" id="finCalStats"></div>
+    <div class="fin-note">Udviklingen fyldes ind fra den dag du begynder at trykke <b>Opdatér kurser</b> — hver dag gemmes et øjebliksbillede af din porteføljeværdi. Der kan ikke hentes historik bagud.</div>
+  </div>
+
+  <div class="fin-card">
+    <div class="fin-h">Udbytte</div>
+    <div id="finDivList"><div class="fin-empty">Tilføj udbytte-% og ex-dato på en beholdning (tryk ✎) for at se udbyttekalenderen.</div></div>
+  </div>
+</div>
+
+<!-- ===== KONTI ===== -->
+<div class="section" data-section="accounts" hidden>
+  <div class="section-title"><span class="section-title-text">KONTI &amp; CASHFLOW</span></div>
+  <div class="fin-card"><div class="fin-empty">Konti, cashflow-tracker og indkomst bygges her.</div></div>
+</div>
+
+<!-- ===== SKAT ===== -->
+<div class="section" data-section="tax" hidden>
+  <div class="section-title"><span class="section-title-text">SKAT</span></div>
+  <div class="fin-card"><div class="fin-empty">Skatteoptimering bygges her.</div></div>
+</div>
+
+<!-- ===== AI ===== -->
+<div class="section" data-section="ai" hidden>
+  <div class="section-title"><span class="section-title-text">AI-ØKONOMIASSISTENT</span></div>
+  <div class="fin-card"><div class="fin-empty">AI-assistenten bygges her.</div></div>
+</div>
+
 </div>
 
 <!-- ===== BOTTOM TAB BAR ===== -->
@@ -1876,6 +2049,22 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   <button class="bot-tab active" data-tab="net">
     <span class="bot-tab-icon">📊</span>
     <span class="bot-tab-label">Formue</span>
+  </button>
+  <button class="bot-tab" data-tab="port">
+    <span class="bot-tab-icon">📈</span>
+    <span class="bot-tab-label">Portefølje</span>
+  </button>
+  <button class="bot-tab" data-tab="accounts">
+    <span class="bot-tab-icon">🏦</span>
+    <span class="bot-tab-label">Konti</span>
+  </button>
+  <button class="bot-tab" data-tab="tax">
+    <span class="bot-tab-icon">🧾</span>
+    <span class="bot-tab-label">Skat</span>
+  </button>
+  <button class="bot-tab" data-tab="ai">
+    <span class="bot-tab-icon">🤖</span>
+    <span class="bot-tab-label">AI</span>
   </button>
   <button class="bot-tab" data-tab="subs">
     <span class="bot-tab-icon">🔁</span>
@@ -1938,7 +2127,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
   tabs.forEach(b => b.addEventListener('click', () => setActiveTab(b.dataset.tab)));
   const savedTab = storeGet(TAB_KEY);
-  setActiveTab(savedTab && ['net','subs','incoming','wish'].includes(savedTab) ? savedTab : 'net');
+  setActiveTab(savedTab && ['net','port','accounts','tax','ai','subs','incoming','wish'].includes(savedTab) ? savedTab : 'net');
 
   // ============================================================
   // NET WORTH (copied from the main dashboard, verbatim logic)
@@ -3390,10 +3579,331 @@ document.addEventListener('DOMContentLoaded', function () {
   initCloudSync({
     appKey: 'finance',
     syncedKeys: ['subs', 'wishlist', 'incoming_orders', 'nw_currency', 'nw:activity', 'nw:history'],
-    syncedPrefixes: ['nw:'],
+    syncedPrefixes: ['nw:', 'fin:'],
     onApplied: function () { window.dispatchEvent(new Event('storage')); }
   });
 });
+</script>
+<script>
+/* ===== Portefølje: live quotes, allocation, daily tracker, dividends ===== */
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const get = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+  const set = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+  const K_HOLD = 'fin:holdings', K_Q = 'fin:quotes', K_HIST = 'fin:history', K_FX = 'fin:fx', K_ACCT = 'fin:accounts';
+  const TYPE_LABEL = { aktiedepot: 'Aktiedepot', ask: 'Aktiesparekonto', boern: 'Børneopsparing', opsparing: 'Opsparing' };
+  const TYPE_COLOR = { aktiedepot: '#6EE7B7', ask: '#7DD3FC', boern: '#F2C063', opsparing: '#B794F4' };
+  const PALETTE = ['#6EE7B7', '#7DD3FC', '#F2C063', '#B794F4', '#F48FB1', '#E07658', '#5AB6C9', '#9CCC65', '#FF8A8A', '#A5B4FC', '#FBBF24', '#4DD0E1'];
+
+  let holdings = get(K_HOLD) || [];
+  let quotes = get(K_Q) || {};        // { TICKER: {price, prevClose, currency, changePct, changeAbs, ts} }
+  let fx = get(K_FX) || { rates: { DKK: 1 }, ts: 0 };
+  let calMonth = new Date(); calMonth.setDate(1);
+
+  function toDKK(amt, cur) {
+    if (amt == null || isNaN(amt)) return 0;
+    if (!cur || cur === 'DKK') return amt;
+    const r = fx.rates && fx.rates[cur];
+    return r ? amt / r : amt;   // rates = units of `cur` per 1 DKK
+  }
+  function fmtDKK(n) {
+    const v = Math.round(n || 0);
+    return 'DKK ' + v.toLocaleString('da-DK');
+  }
+  function fmtPct(p, withSign) {
+    if (p == null || isNaN(p)) return '—';
+    const s = (withSign && p > 0 ? '+' : '') + (Math.round(p * 100) / 100).toLocaleString('da-DK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return s + '%';
+  }
+
+  async function loadFX() {
+    if (fx.ts && Date.now() - fx.ts < 6 * 3600 * 1000) return;
+    try {
+      const r = await fetch('https://open.er-api.com/v6/latest/DKK');
+      const j = await r.json();
+      if (j && j.rates) { fx = { rates: Object.assign({ DKK: 1 }, j.rates), ts: Date.now() }; set(K_FX, fx); }
+    } catch (e) {}
+  }
+
+  // ---- valuation ----
+  function priceDKKof(h) {
+    const q = h.ticker ? quotes[h.ticker.toUpperCase()] : null;
+    if (q && q.price != null && !q.error) return toDKK(q.price, q.currency);
+    if (h.manualPrice != null && h.manualPrice !== '') return Number(h.manualPrice);
+    if (h.gak != null && h.gak !== '') return Number(h.gak);
+    return 0;
+  }
+  function valuate(h) {
+    const shares = Number(h.shares) || 0;
+    const pDKK = priceDKKof(h);
+    const value = shares * pDKK;
+    const gak = (h.gak != null && h.gak !== '') ? Number(h.gak) : null;
+    const cost = gak != null ? shares * gak : null;
+    const q = h.ticker ? quotes[h.ticker.toUpperCase()] : null;
+    const dayDKK = (q && q.changeAbs != null && !q.error) ? shares * toDKK(q.changeAbs, q.currency) : 0;
+    const dayPct = (q && q.changePct != null && !q.error) ? q.changePct : null;
+    const retAbs = cost != null ? value - cost : null;
+    const retPct = (cost != null && cost > 0) ? (value - cost) / cost * 100 : null;
+    return { shares, pDKK, value, cost, dayDKK, dayPct, retAbs, retPct, q };
+  }
+  function cashTotal() {
+    const accts = get(K_ACCT) || [];
+    return accts.reduce((s, a) => s + (Number(a.balance) || 0), 0);
+  }
+  function portfolioTotal() { return holdings.reduce((s, h) => s + valuate(h).value, 0); }
+
+  // ---- donut ----
+  function donut(containerId, rows) {
+    const el = $(containerId); if (!el) return;
+    const total = rows.reduce((s, r) => s + r.value, 0);
+    if (total <= 0) { el.innerHTML = '<div class="fin-empty" style="text-align:center">Ingen data</div>'; return; }
+    const C = 58, R = 42, SW = 16, circ = 2 * Math.PI * R;
+    let off = 0;
+    let ring = '';
+    rows.forEach(r => {
+      const frac = r.value / total;
+      const len = frac * circ;
+      ring += `<circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="${r.color}" stroke-width="${SW}" stroke-dasharray="${len.toFixed(2)} ${(circ - len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 ${C} ${C})"/>`;
+      off += len;
+    });
+    const svg = `<svg class="fin-pie-svg" viewBox="0 0 ${2 * C} ${2 * C}" role="img">${ring}<circle cx="${C}" cy="${C}" r="${R - SW / 2 - 1}" fill="var(--bg)"/></svg>`;
+    let legend = '<div class="fin-legend">';
+    rows.forEach(r => {
+      legend += `<div class="fin-legend-row"><span class="fin-legend-dot" style="background:${r.color}"></span><span class="fin-legend-name">${r.label}</span><span class="fin-legend-pct">${Math.round(r.value / total * 100)}%</span></div>`;
+    });
+    legend += '</div>';
+    el.innerHTML = svg + legend;
+  }
+
+  function renderPies() {
+    const vals = holdings.map(h => ({ h, v: valuate(h).value })).filter(x => x.v > 0);
+    donut('pieStock', vals.map((x, i) => ({ label: x.h.name || x.h.ticker || '—', value: x.v, color: PALETTE[i % PALETTE.length] })));
+    const byDepot = {}; vals.forEach(x => { const d = x.h.depot || 'Ukendt'; byDepot[d] = (byDepot[d] || 0) + x.v; });
+    donut('pieDepot', Object.keys(byDepot).map((d, i) => ({ label: d, value: byDepot[d], color: PALETTE[i % PALETTE.length] })));
+    const byType = {}; vals.forEach(x => { const t = x.h.type || 'aktiedepot'; byType[t] = (byType[t] || 0) + x.v; });
+    donut('pieType', Object.keys(byType).map(t => ({ label: TYPE_LABEL[t] || t, value: byType[t], color: TYPE_COLOR[t] || '#999' })));
+  }
+
+  // ---- holdings list ----
+  function renderHoldings() {
+    const el = $('phList');
+    if (!holdings.length) { el.innerHTML = '<div class="fin-empty">Ingen beholdninger endnu.</div>'; return; }
+    const rows = holdings.map(h => {
+      const v = valuate(h);
+      const q = v.q;
+      const priceInfo = q && !q.error ? `${(Math.round(v.pDKK * 100) / 100).toLocaleString('da-DK')} kr` : (h.ticker ? '<span style="color:var(--warning)">ingen kurs</span>' : 'manuel');
+      const dayCls = v.dayPct == null ? '' : (v.dayPct >= 0 ? 'fin-pos' : 'fin-neg');
+      const retCls = v.retPct == null ? '' : (v.retPct >= 0 ? 'fin-pos' : 'fin-neg');
+      const chip = `<span class="fin-chip" style="background:${(TYPE_COLOR[h.type] || '#888')}22;color:${TYPE_COLOR[h.type] || '#aaa'}">${TYPE_LABEL[h.type] || h.type || ''}</span>`;
+      return `<div class="fin-hold" data-id="${h.id}">
+        <div>
+          <div class="fin-hold-name">${escapeHtml(h.name || h.ticker || '—')}</div>
+          <div class="fin-hold-meta">${chip}${h.depot ? '<span>' + escapeHtml(h.depot) + '</span>' : ''}<span>${(Number(h.shares) || 0).toLocaleString('da-DK')} stk · ${priceInfo}</span></div>
+        </div>
+        <div class="fin-hold-val">
+          <div class="fin-hold-v1">${fmtDKK(v.value)}</div>
+          <div class="fin-hold-v2 ${dayCls}">${v.dayPct != null ? fmtPct(v.dayPct, true) + ' i dag' : ''}</div>
+          <div class="fin-hold-v2 ${retCls}">${v.retPct != null ? fmtPct(v.retPct, true) + ' afkast' : ''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <button class="fin-hold-del" data-edit="${h.id}" title="Redigér">✎</button>
+          <button class="fin-hold-del" data-del="${h.id}" title="Slet">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+    el.innerHTML = rows;
+  }
+
+  function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+  function renderDividends() {
+    const el = $('finDivList');
+    const divs = holdings.filter(h => h.divPct != null && h.divPct !== '').map(h => {
+      const v = valuate(h);
+      const payout = v.value * Number(h.divPct) / 100;
+      return { name: h.name || h.ticker, pct: Number(h.divPct), date: h.divDate || '', payout };
+    }).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    if (!divs.length) { el.innerHTML = '<div class="fin-empty">Tilføj udbytte-% og ex-dato på en beholdning (tryk ✎) for at se udbyttekalenderen.</div>'; return; }
+    el.innerHTML = divs.map(d => `<div class="fin-hold"><div><div class="fin-hold-name">${escapeHtml(d.name)}</div><div class="fin-hold-meta">${d.date ? 'Ex-dato ' + d.date : 'ingen dato'} · ${fmtPct(d.pct)}</div></div><div class="fin-hold-val"><div class="fin-hold-v1">${fmtDKK(d.payout)}</div><div class="fin-hold-v2">est. udbytte</div></div></div>`).join('');
+  }
+
+  // ---- daily development calendar ----
+  function renderCalendar() {
+    const hist = (get(K_HIST) || []).slice().sort((a, b) => a.date.localeCompare(b.date));
+    const valByDate = {}; hist.forEach(h => { valByDate[h.date] = h.value; });
+    // daily % vs previous available snapshot
+    const pct = {};
+    for (let i = 1; i < hist.length; i++) {
+      const prev = hist[i - 1].value;
+      if (prev > 0) pct[hist[i].date] = (hist[i].value - prev) / prev * 100;
+    }
+    const y = calMonth.getFullYear(), mo = calMonth.getMonth();
+    $('finCalTitle').textContent = calMonth.toLocaleDateString('da-DK', { month: 'long', year: 'numeric' });
+    const first = new Date(y, mo, 1);
+    let startDow = (first.getDay() + 6) % 7; // Mon=0
+    const days = new Date(y, mo + 1, 0).getDate();
+    const DOW = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'];
+    let html = DOW.map(d => `<div class="fin-cal-dow">${d}</div>`).join('');
+    for (let i = 0; i < startDow; i++) html += '<div class="fin-cal-cell fin-cal-empty"></div>';
+    const pad = (n) => String(n).padStart(2, '0');
+    const monthPcts = [];
+    for (let d = 1; d <= days; d++) {
+      const key = `${y}-${pad(mo + 1)}-${pad(d)}`;
+      const p = pct[key];
+      let bg = 'rgba(255,255,255,0.03)', col = 'var(--text-quaternary)', txt = '';
+      if (p != null) {
+        monthPcts.push({ d, p });
+        const a = Math.min(0.55, 0.12 + Math.abs(p) / 8 * 0.43);
+        bg = p >= 0 ? `rgba(107,227,164,${a})` : `rgba(255,107,107,${a})`;
+        col = p >= 0 ? '#6BE3A4' : '#FF6B6B';
+        txt = (p > 0 ? '+' : '') + (Math.round(p * 10) / 10).toLocaleString('da-DK') + '%';
+      }
+      html += `<div class="fin-cal-cell" style="background:${bg}"><span class="fin-cal-d">${d}</span><span class="fin-cal-pct" style="color:${col}">${txt}</span></div>`;
+    }
+    $('finCal').innerHTML = `<div class="fin-cal-grid">${html}</div>`;
+    // stats
+    const up = monthPcts.filter(x => x.p > 0).length, down = monthPcts.filter(x => x.p < 0).length;
+    const best = monthPcts.slice().sort((a, b) => b.p - a.p)[0];
+    const worst = monthPcts.slice().sort((a, b) => a.p - b.p)[0];
+    $('finCalStats').innerHTML =
+      `<div class="fin-stat"><div class="fin-stat-l">Dage op</div><div class="fin-stat-v fin-pos">${up}</div></div>` +
+      `<div class="fin-stat"><div class="fin-stat-l">Dage ned</div><div class="fin-stat-v fin-neg">${down}</div></div>` +
+      (best ? `<div class="fin-stat"><div class="fin-stat-l">Bedste dag</div><div class="fin-stat-v fin-pos">${best.d}. · ${fmtPct(best.p, true)}</div></div>` : '') +
+      (worst ? `<div class="fin-stat"><div class="fin-stat-l">Værste dag</div><div class="fin-stat-v fin-neg">${worst.d}. · ${fmtPct(worst.p, true)}</div></div>` : '');
+  }
+
+  function snapshotToday() {
+    const total = portfolioTotal();
+    if (total <= 0) return;
+    const today = new Date();
+    const key = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    let hist = get(K_HIST) || [];
+    hist = hist.filter(h => h.date !== key);
+    hist.push({ date: key, value: total });
+    hist.sort((a, b) => a.date.localeCompare(b.date));
+    if (hist.length > 400) hist = hist.slice(-400);
+    set(K_HIST, hist);
+  }
+
+  function renderTotals() {
+    const total = portfolioTotal();
+    let day = 0, hasDay = false;
+    holdings.forEach(h => { const v = valuate(h); day += v.dayDKK; if (v.q && !v.q.error) hasDay = true; });
+    $('finPortVal').textContent = fmtDKK(total);
+    const dayPct = (total - day) > 0 ? day / (total - day) * 100 : null;
+    $('finPortSub').innerHTML = holdings.length
+      ? (hasDay ? `<span class="${day >= 0 ? 'fin-pos' : 'fin-neg'}">${day >= 0 ? '+' : ''}${fmtDKK(day).replace('DKK ', '')} kr${dayPct != null ? ' (' + fmtPct(dayPct, true) + ')' : ''} i dag</span> · ${holdings.length} beholdninger` : `${holdings.length} beholdninger · tryk Opdatér kurser`)
+      : 'Tilføj din første aktie nedenfor';
+    const nw = total + cashTotal();
+    $('finNetWorth').textContent = fmtDKK(nw);
+    $('finNetWorthSub').textContent = `portefølje ${fmtDKK(total).replace('DKK ', '')} + konti ${fmtDKK(cashTotal()).replace('DKK ', '')} kr`;
+  }
+
+  function renderDepotList() {
+    const dl = $('phDepotList'); if (!dl) return;
+    const set2 = Array.from(new Set(holdings.map(h => h.depot).filter(Boolean)));
+    dl.innerHTML = set2.map(d => `<option value="${escapeHtml(d)}"></option>`).join('');
+  }
+
+  function renderAll() {
+    holdings = get(K_HOLD) || holdings;
+    quotes = get(K_Q) || quotes;
+    renderTotals();
+    renderHoldings();
+    renderPies();
+    renderCalendar();
+    renderDividends();
+    renderDepotList();
+  }
+
+  // ---- refresh quotes ----
+  async function refresh() {
+    const btn = $('finRefresh');
+    const tickers = Array.from(new Set(holdings.map(h => (h.ticker || '').trim().toUpperCase()).filter(Boolean)));
+    if (btn) btn.classList.add('spin');
+    await loadFX();
+    if (tickers.length) {
+      try {
+        const r = await fetch('/api/quote?symbols=' + encodeURIComponent(tickers.join(',')));
+        const j = await r.json();
+        if (j && j.quotes) {
+          Object.keys(j.quotes).forEach(sym => { quotes[sym.toUpperCase()] = Object.assign({ ts: j.ts }, j.quotes[sym]); });
+          set(K_Q, quotes);
+        }
+      } catch (e) {}
+    }
+    snapshotToday();
+    renderAll();
+    if (btn) setTimeout(() => btn.classList.remove('spin'), 500);
+  }
+
+  // ---- add / edit / delete ----
+  function addHolding() {
+    const name = $('phName').value.trim();
+    const ticker = $('phTicker').value.trim();
+    const shares = $('phShares').value.trim();
+    if (!name && !ticker) { $('phName').focus(); return; }
+    if (!shares) { $('phShares').focus(); return; }
+    holdings.push({
+      id: uid(), name, ticker,
+      shares: Number(shares),
+      gak: $('phGak').value.trim() || '',
+      manualPrice: $('phManual').value.trim() || '',
+      depot: $('phDepot').value.trim() || '',
+      type: $('phType').value,
+      divPct: '', divDate: ''
+    });
+    set(K_HOLD, holdings);
+    ['phName', 'phTicker', 'phShares', 'phGak', 'phManual', 'phDepot'].forEach(id => $(id).value = '');
+    renderAll();
+    refresh();
+  }
+  function editHolding(id) {
+    const h = holdings.find(x => x.id === id); if (!h) return;
+    const shares = prompt('Antal:', h.shares); if (shares === null) return;
+    const gak = prompt('GAK / købskurs (DKK):', h.gak);
+    const manual = prompt('Manuel kurs (DKK, valgfri):', h.manualPrice);
+    const depot = prompt('Depot:', h.depot);
+    const divPct = prompt('Udbytte % (valgfri):', h.divPct);
+    const divDate = prompt('Udbytte ex-dato (YYYY-MM-DD, valgfri):', h.divDate);
+    h.shares = Number(shares) || 0;
+    if (gak !== null) h.gak = gak.trim();
+    if (manual !== null) h.manualPrice = manual.trim();
+    if (depot !== null) h.depot = depot.trim();
+    if (divPct !== null) h.divPct = divPct.trim();
+    if (divDate !== null) h.divDate = divDate.trim();
+    set(K_HOLD, holdings);
+    renderAll();
+  }
+  function delHolding(id) {
+    holdings = holdings.filter(x => x.id !== id);
+    set(K_HOLD, holdings);
+    renderAll();
+  }
+
+  // ---- wire up ----
+  function init() {
+    const add = $('phAdd'); if (add) add.addEventListener('click', addHolding);
+    const rf = $('finRefresh'); if (rf) rf.addEventListener('click', refresh);
+    const list = $('phList');
+    if (list) list.addEventListener('click', (e) => {
+      const del = e.target.closest('[data-del]'); const ed = e.target.closest('[data-edit]');
+      if (del) delHolding(del.getAttribute('data-del'));
+      else if (ed) editHolding(ed.getAttribute('data-edit'));
+    });
+    const prev = $('finCalPrev'), next = $('finCalNext');
+    if (prev) prev.addEventListener('click', () => { calMonth.setMonth(calMonth.getMonth() - 1); renderCalendar(); });
+    if (next) next.addEventListener('click', () => { calMonth.setMonth(calMonth.getMonth() + 1); renderCalendar(); });
+    window.addEventListener('storage', renderAll);
+    renderAll();
+    loadFX().then(() => { if (holdings.length) refresh(); });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
 </script>
 </body>
 </html>
