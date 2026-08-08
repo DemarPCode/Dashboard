@@ -149,6 +149,77 @@ main {
 
 .fh-status { font-size: 11px; color: var(--text-tertiary); text-align: center; margin-top: 14px; font-style: italic; min-height: 14px; }
 
+/* ===== Sleep card (WHOOP-style, wired to Google Health sleep) ===== */
+.sleep-card {
+  background: rgba(255,255,255,0.025);
+  border-radius: 22px;
+  padding: 22px 22px 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 1px 0 0 rgba(255,255,255,0.06) inset, 0 12px 40px rgba(0,0,0,0.45);
+}
+.sl-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 16px; }
+.sl-brand { display: inline-flex; align-items: center; gap: 8px; }
+.sl-brand-mark { font-size: 18px; line-height: 1; filter: drop-shadow(0 0 10px rgba(167,139,250,0.5)); }
+.sl-brand-text { font-weight: 800; font-size: 13px; letter-spacing: 0.18em; color: var(--text-primary); }
+.sl-updated { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); }
+
+/* Summary row: score ring + key numbers */
+.sl-summary { display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: center; }
+.sl-ring-wrap { position: relative; width: 116px; height: 116px; flex-shrink: 0; }
+.sl-ring { width: 100%; height: 100%; transform: rotate(-90deg); }
+.sl-ring-track { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 10; }
+.sl-ring-fill { fill: none; stroke: #A78BFA; stroke-width: 10; stroke-linecap: round; stroke-dasharray: 320.44; stroke-dashoffset: 320.44; transition: stroke-dashoffset 0.8s cubic-bezier(0.22,1,0.36,1), stroke 0.4s; }
+.sl-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.sl-ring-num { font-size: 30px; font-weight: 700; letter-spacing: -0.04em; color: var(--text-primary); line-height: 1; font-variant-numeric: tabular-nums; }
+.sl-ring-unit { font-size: 8.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-tertiary); margin-top: 6px; }
+.sl-summary-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.sl-sum { background: rgba(255,255,255,0.025); border-radius: 12px; padding: 11px 8px; text-align: center; }
+.sl-sum-label { font-size: 9px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; margin-bottom: 6px; }
+.sl-sum-value { font-size: 17px; font-weight: 700; color: var(--text-primary); line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
+.sl-sum-sub { font-size: 9px; color: var(--text-tertiary); margin-top: 4px; font-family: var(--font-mono); }
+@media (max-width: 420px) { .sl-summary { grid-template-columns: 1fr; justify-items: center; } .sl-summary-grid { width: 100%; } }
+
+/* Proportional stage bar (last night) */
+.sl-stages { margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.05); }
+.sl-stages-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.sl-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-tertiary); }
+.sl-stages-meta { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); }
+.sl-stages-bar { display: flex; height: 10px; background: rgba(255,255,255,0.04); border-radius: 999px; overflow: hidden; margin-bottom: 12px; }
+.sl-seg { height: 100%; transition: width 0.7s cubic-bezier(0.22,1,0.36,1); }
+.sl-c-rem   { background: #A78BFA; } .sl-c-deep { background: #5B8DEF; } .sl-c-light { background: #76A9C9; } .sl-c-awake { background: #F2C063; } .sl-c-restless { background: #E07658; }
+.sl-legend { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; }
+.sl-leg { display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--text-secondary); font-weight: 500; }
+.sl-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.sl-leg-num { display: block; color: var(--text-primary); font-weight: 700; font-family: var(--font-mono); font-size: 10px; }
+@media (max-width: 520px) { .sl-legend { grid-template-columns: repeat(3,1fr); } }
+
+/* Expand toggle */
+.sl-toggle { width: 100%; margin-top: 18px; padding: 11px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); color: var(--text-secondary); font-family: var(--font); font-size: 12.5px; font-weight: 600; letter-spacing: 0.02em; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.18s, color 0.18s; }
+.sl-toggle:hover { background: rgba(255,255,255,0.07); color: var(--text-primary); }
+.sl-toggle-arrow { transition: transform 0.25s cubic-bezier(0.22,1,0.36,1); }
+.sl-toggle[aria-expanded="true"] .sl-toggle-arrow { transform: rotate(180deg); }
+
+.sl-detail { margin-top: 18px; display: grid; gap: 20px; }
+.sl-detail[hidden] { display: none; }
+
+/* Hypnogram */
+.sl-block-title { font-size: 12px; font-weight: 700; color: var(--text-primary); margin-bottom: 3px; }
+.sl-block-sub { font-size: 10.5px; color: var(--text-tertiary); margin-bottom: 12px; font-family: var(--font-mono); }
+.sl-hypno { width: 100%; height: 132px; display: block; }
+.sl-hypno-empty, .sl-chart-empty { font-size: 11.5px; color: var(--text-quaternary); font-style: italic; padding: 22px 4px; text-align: center; }
+
+/* Mini bar charts grid */
+.sl-charts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+@media (max-width: 560px) { .sl-charts { grid-template-columns: 1fr; } }
+.sl-chart { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 14px 14px 10px; }
+.sl-chart-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.sl-chart-title { font-size: 11px; font-weight: 700; color: var(--text-primary); letter-spacing: 0.01em; }
+.sl-chart-avg { font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono); }
+.sl-chart-svg { width: 100%; height: 96px; display: block; overflow: visible; }
+.sl-bar { transition: height 0.6s cubic-bezier(0.22,1,0.36,1), y 0.6s cubic-bezier(0.22,1,0.36,1); }
+.sl-bar-lbl { fill: var(--text-tertiary); font-size: 8px; font-family: var(--font-mono); }
+.sl-bar-val { fill: var(--text-secondary); font-size: 8.5px; font-weight: 700; font-family: var(--font-mono); }
+
 .stack-card {
   background: var(--bg-card);
   border-radius: 16px;
@@ -579,6 +650,95 @@ main {
     </div>
 
     <div class="fh-status" id="fhStatus"></div>
+  </div>
+
+  <div class="section-title">Søvn</div>
+  <div class="sleep-card">
+    <div class="sl-header">
+      <div class="sl-brand">
+        <span class="sl-brand-mark">🌙</span>
+        <span class="sl-brand-text">SØVN</span>
+      </div>
+      <span class="sl-updated" id="slUpdated"></span>
+    </div>
+
+    <div class="sl-summary">
+      <div class="sl-ring-wrap">
+        <svg class="sl-ring" viewBox="0 0 116 116" aria-hidden="true">
+          <circle class="sl-ring-track" cx="58" cy="58" r="51" />
+          <circle class="sl-ring-fill" id="slRingFill" cx="58" cy="58" r="51" />
+        </svg>
+        <div class="sl-ring-center">
+          <div class="sl-ring-num" id="slScore">—</div>
+          <div class="sl-ring-unit">score</div>
+        </div>
+      </div>
+      <div class="sl-summary-grid">
+        <div class="sl-sum"><div class="sl-sum-label">Varighed</div><div class="sl-sum-value" id="slDuration">—</div><div class="sl-sum-sub">i nat</div></div>
+        <div class="sl-sum"><div class="sl-sum-label">Effektivitet</div><div class="sl-sum-value" id="slEff">—</div><div class="sl-sum-sub">%</div></div>
+        <div class="sl-sum"><div class="sl-sum-label">Sengetid</div><div class="sl-sum-value" id="slBedtime">—</div><div class="sl-sum-sub" id="slWake">—</div></div>
+      </div>
+    </div>
+
+    <div class="sl-stages" id="slStagesBlock" style="display:none">
+      <div class="sl-stages-head">
+        <span class="sl-eyebrow">Søvnstadier · i nat</span>
+        <span class="sl-stages-meta" id="slStagesMeta"></span>
+      </div>
+      <div class="sl-stages-bar">
+        <div class="sl-seg sl-c-deep"     id="slSegDeep"     style="width:0%"></div>
+        <div class="sl-seg sl-c-light"    id="slSegLight"    style="width:0%"></div>
+        <div class="sl-seg sl-c-rem"      id="slSegRem"      style="width:0%"></div>
+        <div class="sl-seg sl-c-restless" id="slSegRestless" style="width:0%"></div>
+        <div class="sl-seg sl-c-awake"    id="slSegAwake"    style="width:0%"></div>
+      </div>
+      <div class="sl-legend">
+        <div class="sl-leg"><span class="sl-dot sl-c-deep"></span><span>Dyb<span class="sl-leg-num" id="slDeepTxt">—</span></span></div>
+        <div class="sl-leg"><span class="sl-dot sl-c-light"></span><span>Let<span class="sl-leg-num" id="slLightTxt">—</span></span></div>
+        <div class="sl-leg"><span class="sl-dot sl-c-rem"></span><span>REM<span class="sl-leg-num" id="slRemTxt">—</span></span></div>
+        <div class="sl-leg"><span class="sl-dot sl-c-restless"></span><span>Uro<span class="sl-leg-num" id="slRestlessTxt">—</span></span></div>
+        <div class="sl-leg"><span class="sl-dot sl-c-awake"></span><span>Vågen<span class="sl-leg-num" id="slAwakeTxt">—</span></span></div>
+      </div>
+    </div>
+
+    <button class="sl-toggle" id="slToggle" aria-expanded="false">
+      <span id="slToggleTxt">Se mere</span>
+      <span class="sl-toggle-arrow">↓</span>
+    </button>
+
+    <div class="sl-detail" id="slDetail" hidden>
+      <div>
+        <div class="sl-block-title">Søvnforløb · i nat</div>
+        <div class="sl-block-sub" id="slHypnoSub">søvnstadier over tid</div>
+        <div id="slHypnoWrap"><div class="sl-hypno-empty">Ingen søvnforløb for i nat endnu.</div></div>
+      </div>
+      <div class="sl-charts">
+        <div class="sl-chart">
+          <div class="sl-chart-head"><span class="sl-chart-title">Timer søvn · 7 dage</span><span class="sl-chart-avg" id="slAvgHours"></span></div>
+          <div id="slChartHours"><div class="sl-chart-empty">Ingen data endnu</div></div>
+        </div>
+        <div class="sl-chart">
+          <div class="sl-chart-head"><span class="sl-chart-title">Søvnscore · 7 dage</span><span class="sl-chart-avg" id="slAvgScore"></span></div>
+          <div id="slChartScore"><div class="sl-chart-empty">Ingen data endnu</div></div>
+        </div>
+        <div class="sl-chart">
+          <div class="sl-chart-head"><span class="sl-chart-title">Primær søvn · 7 dage</span><span class="sl-chart-avg" id="slAvgPrimary"></span></div>
+          <div id="slChartPrimary"><div class="sl-chart-empty">Ingen data endnu</div></div>
+        </div>
+        <div class="sl-chart">
+          <div class="sl-chart-head"><span class="sl-chart-title">Søvneffektivitet · 7 dage</span><span class="sl-chart-avg" id="slAvgEff"></span></div>
+          <div id="slChartEff"><div class="sl-chart-empty">Ingen data endnu</div></div>
+        </div>
+        <div class="sl-chart">
+          <div class="sl-chart-head"><span class="sl-chart-title">REM-søvn · 7 dage</span><span class="sl-chart-avg" id="slAvgRem"></span></div>
+          <div id="slChartRem"><div class="sl-chart-empty">Ingen data endnu</div></div>
+        </div>
+        <div class="sl-chart">
+          <div class="sl-chart-head"><span class="sl-chart-title">Dyb søvn · 7 dage</span><span class="sl-chart-avg" id="slAvgDeep"></span></div>
+          <div id="slChartDeep"><div class="sl-chart-empty">Ingen data endnu</div></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="section-title">Dagligt tilskud</div>
@@ -1258,7 +1418,281 @@ document.addEventListener('DOMContentLoaded', function () {
       ? 'Nogle felter mangler data endnu (' + missing.join(', ') + ') — bær armbåndet natten over.'
       : '';
     $('fhUpdated').textContent = new Date().toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
+
+    try { renderSleep(data); } catch (e) { console.warn('sleep render failed', e); }
   }
+
+  // ============================================================
+  //  SLEEP — defensive normaliser + WHOOP-style detail views
+  //  Adapts to whatever shape Google Health's `sleep` dataType
+  //  returns. Missing fields degrade to empty states, never break.
+  // ============================================================
+  const SL_STAGE_DEFS = [
+    { key: 'deep',     re: /deep|dyb|slow.?wave|\bn3\b|\bsws\b/i },
+    { key: 'rem',      re: /\brem\b/i },
+    { key: 'restless', re: /restless|uro|out.?of.?bed|out_of_bed/i },
+    { key: 'light',    re: /light|let|core|\bn1\b|\bn2\b/i },
+    { key: 'awake',    re: /awake|wake|vågen|\bwk\b/i },
+  ];
+  const SL_COLOR = { deep: '#5B8DEF', light: '#76A9C9', rem: '#A78BFA', restless: '#E07658', awake: '#F2C063' };
+  const SL_ORDER = ['deep', 'light', 'rem', 'restless', 'awake'];
+
+  function slParseTime(t) {
+    if (t == null) return null;
+    if (typeof t === 'number') { const d = new Date(t < 1e12 ? t * 1000 : t); return isNaN(+d) ? null : d; }
+    const d = new Date(t); return isNaN(+d) ? null : d;
+  }
+  function slClassify(v) {
+    const s = String(v).toLowerCase();
+    for (const d of SL_STAGE_DEFS) if (d.re.test(s)) return d.key;
+    return null;
+  }
+  function slFindInterval(obj, depth) {
+    if (obj == null || (depth || 0) > 6 || typeof obj !== 'object') return null;
+    const s = obj.startTime != null ? obj.startTime : (obj.start != null ? obj.start : obj.startTimeMillis);
+    const e = obj.endTime != null ? obj.endTime : (obj.end != null ? obj.end : obj.endTimeMillis);
+    if (s != null && e != null) {
+      const ds = slParseTime(s), de = slParseTime(e);
+      if (ds && de && de > ds) return { start: ds, end: de };
+    }
+    for (const k of Object.keys(obj)) {
+      const r = slFindInterval(obj[k], (depth || 0) + 1);
+      if (r) return r;
+    }
+    return null;
+  }
+  function slCollectSegments(obj, out, depth) {
+    if (obj == null || (depth || 0) > 8) return;
+    if (Array.isArray(obj)) {
+      for (const it of obj) {
+        if (it && typeof it === 'object') {
+          let stage = null;
+          for (const k of Object.keys(it)) {
+            if (/stage|type|level|state|status/i.test(k)) { const c = slClassify(it[k]); if (c) { stage = c; break; } }
+          }
+          const iv = slFindInterval(it, 0);
+          if (stage && iv) { out.push({ stage, start: iv.start, end: iv.end }); continue; }
+        }
+        slCollectSegments(it, out, (depth || 0) + 1);
+      }
+      return;
+    }
+    if (typeof obj === 'object') for (const k of Object.keys(obj)) slCollectSegments(obj[k], out, (depth || 0) + 1);
+  }
+  function slLocalDay(d) {
+    const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), dd = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dd}`;
+  }
+  function slFmtDur(min) {
+    if (min == null || isNaN(min)) return '—';
+    const h = Math.floor(min / 60), m = Math.round(min % 60);
+    return h > 0 ? `${h}t ${m}m` : `${m}m`;
+  }
+  function slClock(d) { return d ? d.toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' }) : '—'; }
+  function slWeekday(dateStr) {
+    const d = new Date(dateStr + 'T12:00:00');
+    const w = d.toLocaleDateString('da-DK', { weekday: 'short' }).replace('.', '');
+    return w.charAt(0).toUpperCase() + w.slice(1);
+  }
+
+  // Turn one raw sleep dataPoint into a normalised session, or null.
+  function slSession(p) {
+    const iv = slFindInterval(p, 0);
+    const segs = [];
+    slCollectSegments(p, segs, 0);
+    // de-dupe + sort segments by start
+    const seen = new Set();
+    const clean = segs.filter(s => {
+      const k = s.stage + '|' + (+s.start) + '|' + (+s.end);
+      if (seen.has(k)) return false; seen.add(k); return true;
+    }).sort((a, b) => a.start - b.start);
+
+    const stageMin = { deep: 0, light: 0, rem: 0, restless: 0, awake: 0 };
+    clean.forEach(s => { stageMin[s.stage] += (s.end - s.start) / 60000; });
+
+    let start = iv && iv.start, end = iv && iv.end;
+    if ((!start || !end) && clean.length) { start = clean[0].start; end = clean[clean.length - 1].end; }
+    if (!start || !end) return null;
+
+    const asleep = stageMin.deep + stageMin.light + stageMin.rem;
+    const inBed = (end - start) / 60000;
+    const total = asleep > 0 ? asleep : inBed;
+
+    let eff = deepFind(p, /efficiency/i, 0);
+    if (eff == null && (asleep + stageMin.awake + stageMin.restless) > 0) {
+      eff = asleep / (asleep + stageMin.awake + stageMin.restless) * 100;
+    } else if (eff == null && inBed > 0) {
+      eff = total / inBed * 100;
+    }
+    let score = deepFind(p, /(sleep.?score|\bscore\b)/i, 0);
+
+    return { start, end, total, inBed, stageMin, segments: clean, efficiency: eff, score };
+  }
+
+  function slDeriveScore(total, eff) {
+    if (total == null) return null;
+    const durPct = Math.min(100, (total / 480) * 100);       // 8h target
+    const e = eff != null ? Math.max(0, Math.min(100, eff)) : durPct;
+    return Math.round(0.65 * durPct + 0.35 * e);
+  }
+
+  function slRenderBars(containerId, items, opts) {
+    const el = $(containerId);
+    if (!el) return;
+    const has = items.some(i => i.value != null && !isNaN(i.value) && i.value > 0);
+    if (!items.length || !has) { el.innerHTML = '<div class="sl-chart-empty">Ingen data endnu</div>'; return; }
+    const max = opts.max || Math.max.apply(null, items.map(i => i.value || 0)) || 1;
+    const bw = 34, gap = 12, H = 100, padTop = 16, padBottom = 15, plot = H - padTop - padBottom;
+    const W = items.length * bw + (items.length - 1) * gap;
+    let svg = `<svg class="sl-chart-svg" viewBox="0 0 ${W} ${H}" role="img">`;
+    items.forEach((it, i) => {
+      const v = it.value || 0;
+      const h = Math.max(v > 0 ? (v / max) * plot : 0, v > 0 ? 2 : 0);
+      const x = i * (bw + gap), y = padTop + plot - h;
+      const isLast = i === items.length - 1;
+      const fill = isLast ? opts.color : (opts.color + '99');
+      svg += `<rect class="sl-bar" x="${x}" y="${y}" width="${bw}" height="${h}" rx="2" fill="${fill}"/>`;
+      if (it.display) svg += `<text class="sl-bar-val" x="${x + bw / 2}" y="${Math.max(y - 3, 8)}" text-anchor="middle">${it.display}</text>`;
+      svg += `<text class="sl-bar-lbl" x="${x + bw / 2}" y="${H - 4}" text-anchor="middle">${it.label}</text>`;
+    });
+    svg += '</svg>';
+    el.innerHTML = svg;
+  }
+
+  function slRenderHypnogram(day) {
+    const wrap = $('slHypnoWrap');
+    if (!wrap) return;
+    if (!day || !day.segments || !day.segments.length) {
+      wrap.innerHTML = '<div class="sl-hypno-empty">Ingen søvnforløb for i nat endnu.</div>';
+      return;
+    }
+    const lanes = [
+      { keys: ['awake', 'restless'], label: 'Vågen' },
+      { keys: ['rem'], label: 'REM' },
+      { keys: ['light'], label: 'Let' },
+      { keys: ['deep'], label: 'Dyb' },
+    ];
+    const laneIdx = {}; lanes.forEach((l, i) => l.keys.forEach(k => laneIdx[k] = i));
+    const t0 = +day.start, t1 = +day.end, span = Math.max(1, t1 - t0);
+    const W = 320, H = 132, left = 34, top = 6, bottom = 18, plotH = H - top - bottom;
+    const laneH = plotH / lanes.length, barH = laneH * 0.62;
+    let svg = `<svg class="sl-hypno" viewBox="0 0 ${W} ${H}" role="img" preserveAspectRatio="none">`;
+    lanes.forEach((l, i) => {
+      const cy = top + i * laneH + laneH / 2;
+      svg += `<line x1="${left}" y1="${cy}" x2="${W}" y2="${cy}" stroke="rgba(255,255,255,0.05)" stroke-width="0.6"/>`;
+      svg += `<text x="0" y="${cy + 2.5}" fill="var(--text-tertiary)" font-size="7.5" font-family="var(--font-mono)">${l.label}</text>`;
+    });
+    day.segments.forEach(s => {
+      const li = laneIdx[s.stage]; if (li == null) return;
+      const x = left + ((+s.start - t0) / span) * (W - left);
+      const w = Math.max(((s.end - s.start) / span) * (W - left), 0.8);
+      const y = top + li * laneH + (laneH - barH) / 2;
+      svg += `<rect x="${x}" y="${y}" width="${w}" height="${barH}" rx="1.2" fill="${SL_COLOR[s.stage]}"/>`;
+    });
+    svg += `<text x="${left}" y="${H - 4}" fill="var(--text-tertiary)" font-size="7.5" font-family="var(--font-mono)" text-anchor="start">${slClock(day.start)}</text>`;
+    svg += `<text x="${W}" y="${H - 4}" fill="var(--text-tertiary)" font-size="7.5" font-family="var(--font-mono)" text-anchor="end">${slClock(day.end)}</text>`;
+    svg += '</svg>';
+    wrap.innerHTML = svg;
+    const sub = $('slHypnoSub');
+    if (sub) sub.textContent = `${slClock(day.start)} – ${slClock(day.end)} · ${slFmtDur(day.total)}`;
+  }
+
+  function renderSleep(data) {
+    const raw = Array.isArray(data.sleep) ? data.sleep : [];
+    const sessions = raw.map(slSession).filter(Boolean);
+    if (!sessions.length) {
+      $('slUpdated').textContent = 'ingen søvndata endnu';
+      return;
+    }
+
+    // group sessions by wake-day; keep total (sum) + primary (longest)
+    const byDay = {};
+    sessions.forEach(s => {
+      const key = slLocalDay(s.end);
+      (byDay[key] = byDay[key] || []).push(s);
+    });
+    const days = Object.keys(byDay).sort().slice(-7).map(date => {
+      const list = byDay[date].sort((a, b) => b.total - a.total);
+      const primary = list[0];
+      const total = list.reduce((n, s) => n + s.total, 0);
+      const stageMin = { deep: 0, light: 0, rem: 0, restless: 0, awake: 0 };
+      list.forEach(s => SL_ORDER.forEach(k => { stageMin[k] += s.stageMin[k]; }));
+      const eff = primary.efficiency;
+      const score = primary.score != null ? Math.round(primary.score) : slDeriveScore(total, eff);
+      return { date, primary, total, stageMin, efficiency: eff, score, segments: primary.segments, start: primary.start, end: primary.end };
+    });
+
+    const last = days[days.length - 1];
+
+    // ---- Summary (last night) ----
+    if (last.score != null) {
+      $('slScore').textContent = last.score;
+      const c = 320.44;
+      $('slRingFill').style.strokeDashoffset = String(c * (1 - Math.max(0, Math.min(1, last.score / 100))));
+    }
+    $('slDuration').textContent = slFmtDur(last.total);
+    $('slEff').textContent = last.efficiency != null ? Math.round(last.efficiency) : '—';
+    $('slBedtime').textContent = slClock(last.start);
+    $('slWake').textContent = '→ ' + slClock(last.end);
+
+    // ---- Stage bar (last night) ----
+    const sm = last.stageMin, sTot = SL_ORDER.reduce((n, k) => n + sm[k], 0);
+    if (sTot > 0) {
+      $('slStagesBlock').style.display = '';
+      const pct = k => (sm[k] / sTot * 100);
+      $('slSegDeep').style.width = pct('deep') + '%';
+      $('slSegLight').style.width = pct('light') + '%';
+      $('slSegRem').style.width = pct('rem') + '%';
+      $('slSegRestless').style.width = pct('restless') + '%';
+      $('slSegAwake').style.width = pct('awake') + '%';
+      $('slDeepTxt').textContent = ' ' + slFmtDur(sm.deep);
+      $('slLightTxt').textContent = ' ' + slFmtDur(sm.light);
+      $('slRemTxt').textContent = ' ' + slFmtDur(sm.rem);
+      $('slRestlessTxt').textContent = ' ' + slFmtDur(sm.restless);
+      $('slAwakeTxt').textContent = ' ' + slFmtDur(sm.awake);
+      $('slStagesMeta').textContent = slFmtDur(sTot) + ' i søvn';
+    }
+
+    // ---- Hypnogram (last night) ----
+    slRenderHypnogram(last);
+
+    // ---- 7-day charts ----
+    const lbl = d => slWeekday(d.date);
+    const hrs = d => Math.round(d.total / 60 * 10) / 10;
+    slRenderBars('slChartHours',   days.map(d => ({ label: lbl(d), value: d.total / 60, display: hrs(d) })), { color: '#A78BFA' });
+    slRenderBars('slChartScore',   days.map(d => ({ label: lbl(d), value: d.score,      display: d.score != null ? d.score : '' })), { color: '#6BE3A4', max: 100 });
+    slRenderBars('slChartPrimary', days.map(d => ({ label: lbl(d), value: d.primary.total / 60, display: Math.round(d.primary.total / 60 * 10) / 10 })), { color: '#7DD3FC' });
+    slRenderBars('slChartEff',     days.map(d => ({ label: lbl(d), value: d.efficiency != null ? Math.round(d.efficiency) : 0, display: d.efficiency != null ? Math.round(d.efficiency) : '' })), { color: '#F2C063', max: 100 });
+    slRenderBars('slChartRem',     days.map(d => ({ label: lbl(d), value: d.stageMin.rem,  display: Math.round(d.stageMin.rem) })), { color: SL_COLOR.rem });
+    slRenderBars('slChartDeep',    days.map(d => ({ label: lbl(d), value: d.stageMin.deep, display: Math.round(d.stageMin.deep) })), { color: SL_COLOR.deep });
+
+    const avg = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+    const avgHrs = avg(days.map(d => d.total / 60));
+    const avgScore = avg(days.filter(d => d.score != null).map(d => d.score));
+    const avgPrim = avg(days.map(d => d.primary.total / 60));
+    const avgEff = avg(days.filter(d => d.efficiency != null).map(d => d.efficiency));
+    const avgRem = avg(days.map(d => d.stageMin.rem));
+    const avgDeep = avg(days.map(d => d.stageMin.deep));
+    if (avgHrs != null) $('slAvgHours').textContent = 'gns ' + (Math.round(avgHrs * 10) / 10) + 't';
+    if (avgScore != null) $('slAvgScore').textContent = 'gns ' + Math.round(avgScore);
+    if (avgPrim != null) $('slAvgPrimary').textContent = 'gns ' + (Math.round(avgPrim * 10) / 10) + 't';
+    if (avgEff != null) $('slAvgEff').textContent = 'gns ' + Math.round(avgEff) + '%';
+    if (avgRem != null) $('slAvgRem').textContent = 'gns ' + Math.round(avgRem) + 'm';
+    if (avgDeep != null) $('slAvgDeep').textContent = 'gns ' + Math.round(avgDeep) + 'm';
+
+    $('slUpdated').textContent = 'opdateret ' + new Date().toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // Expand / collapse the detail panel
+  (function () {
+    const t = $('slToggle'), d = $('slDetail'), tx = $('slToggleTxt');
+    if (!t || !d) return;
+    t.addEventListener('click', () => {
+      const open = d.hasAttribute('hidden');
+      if (open) { d.removeAttribute('hidden'); t.setAttribute('aria-expanded', 'true'); tx.textContent = 'Skjul'; }
+      else { d.setAttribute('hidden', ''); t.setAttribute('aria-expanded', 'false'); tx.textContent = 'Se mere'; }
+    });
+  })();
 
   async function load() {
     const btn = $('fhRefresh');
