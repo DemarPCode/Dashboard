@@ -85,21 +85,69 @@ main {
 }
 .section-title::before { content: '≡'; font-size: 14px; opacity: 0.5; }
 
-.water-embed { margin-top: 56px; }
-.water-iframe {
-  display: block;
-  width: 100%;
-  height: 880px;
-  border: 0;
-  background: transparent;
-  border-radius: 16px;
-  overflow: hidden;
-  color-scheme: dark;
+/* ===== Fitbit health card (WHOOP-style, wired to Google Health) ===== */
+.fh-card {
+  background: rgba(255,255,255,0.025);
+  border-radius: 22px;
+  padding: 22px 22px 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 1px 0 0 rgba(255,255,255,0.06) inset, 0 12px 40px rgba(0,0,0,0.45);
 }
-@media (max-width: 480px) {
-  .water-embed { margin-top: 40px; }
-  .water-iframe { height: 780px; }
+.fh-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+.fh-brand { display: inline-flex; align-items: center; gap: 8px; }
+.fh-brand-mark {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #00B0B9; color: #04121A; font-weight: 900; font-size: 12px;
+  display: inline-flex; align-items: center; justify-content: center; letter-spacing: -0.04em;
+  box-shadow: 0 0 12px rgba(0,176,185,0.35);
 }
+.fh-brand-text { font-weight: 800; font-size: 13px; letter-spacing: 0.18em; color: var(--text-primary); }
+.fh-live { display: inline-flex; align-items: center; gap: 5px; font-size: 9.5px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: #6BE3A4; margin-left: 4px; }
+.fh-live-dot { width: 6px; height: 6px; border-radius: 50%; background: #6BE3A4; box-shadow: 0 0 8px rgba(107,227,164,0.65); animation: fh-pulse 1.6s ease-in-out infinite; }
+@keyframes fh-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.85)} }
+.fh-header-right { display: flex; align-items: center; gap: 10px; }
+.fh-updated { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); }
+.fh-refresh { width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: var(--text-secondary); cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: background 0.18s, transform 0.3s; }
+.fh-refresh:hover { background: rgba(255,255,255,0.10); color: var(--text-primary); }
+.fh-refresh.spin { transform: rotate(360deg); }
+
+.fh-ring-wrap { position: relative; width: 240px; max-width: 78%; margin: 0 auto 24px; aspect-ratio: 1; }
+.fh-ring { width: 100%; height: 100%; transform: rotate(-90deg); filter: drop-shadow(0 0 24px rgba(255,255,255,0.05)); }
+.fh-ring-track { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 12; }
+.fh-ring-fill { fill: none; stroke: #00B0B9; stroke-width: 12; stroke-linecap: round; stroke-dasharray: 603.19; stroke-dashoffset: 603.19; transition: stroke-dashoffset 0.8s cubic-bezier(0.22,1,0.36,1), stroke 0.4s; }
+.fh-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+.fh-ring-num { font-size: 46px; font-weight: 700; letter-spacing: -0.04em; color: var(--text-primary); line-height: 1; font-variant-numeric: tabular-nums; }
+.fh-ring-unit { font-size: 10px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-tertiary); margin-top: 10px; }
+.fh-ring-label { font-size: 12.5px; font-weight: 600; margin-top: 6px; color: var(--text-secondary); }
+
+.fh-stages { margin-bottom: 22px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,0.05); }
+.fh-stages-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.fh-stages-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-tertiary); }
+.fh-stages-meta { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); }
+.fh-stages-bar { display: flex; height: 10px; background: rgba(255,255,255,0.04); border-radius: 999px; overflow: hidden; margin-bottom: 12px; }
+.fh-stage { height: 100%; transition: width 0.7s cubic-bezier(0.22,1,0.36,1); }
+.fh-stage-rem { background: #FFFFFF; } .fh-stage-deep { background: #B8B6B0; } .fh-stage-light { background: #76746E; } .fh-stage-awake { background: #38362F; }
+.fh-stages-legend { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+.fh-stages-leg { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary); font-weight: 500; }
+.fh-stages-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.fh-stages-dot.d-rem { background: #FFF; } .fh-stages-dot.d-deep { background: #B8B6B0; } .fh-stages-dot.d-light { background: #76746E; } .fh-stages-dot.d-awake { background: #38362F; }
+.fh-stages-num { margin-left: auto; color: var(--text-primary); font-weight: 700; font-family: var(--font-mono); font-size: 11px; }
+@media (max-width: 480px) { .fh-stages-legend { grid-template-columns: repeat(2,1fr); } }
+
+.fh-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,0.05); }
+.fh-stat { background: rgba(255,255,255,0.025); border-radius: 12px; padding: 12px 10px; text-align: center; }
+.fh-stat-label { font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700; margin-bottom: 8px; }
+.fh-stat-value { font-size: 20px; font-weight: 700; color: var(--text-primary); line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
+.fh-stat-sub { font-size: 10px; color: var(--text-tertiary); margin-top: 5px; font-family: var(--font-mono); }
+@media (max-width: 480px) { .fh-stats { grid-template-columns: repeat(2,1fr); } }
+
+.fh-bio { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 12px; }
+.fh-bio-item { display: flex; flex-direction: column; gap: 4px; padding: 11px 12px; background: rgba(255,255,255,0.025); border-radius: 12px; text-align: center; }
+.fh-bio-label { font-size: 9.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-tertiary); }
+.fh-bio-val { font-size: 14px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+@media (max-width: 380px) { .fh-bio { grid-template-columns: 1fr; } }
+
+.fh-status { font-size: 11px; color: var(--text-tertiary); text-align: center; margin-top: 14px; font-style: italic; min-height: 14px; }
 
 .stack-card {
   background: var(--bg-card);
@@ -472,6 +520,67 @@ main {
 <body>
 
 <main>
+  <div class="section-title">Fitbit</div>
+  <div class="fh-card">
+    <div class="fh-header">
+      <div class="fh-brand">
+        <span class="fh-brand-mark">F</span>
+        <span class="fh-brand-text">FITBIT</span>
+        <span class="fh-live"><span class="fh-live-dot"></span>live</span>
+      </div>
+      <div class="fh-header-right">
+        <span class="fh-updated" id="fhUpdated">loading…</span>
+        <button class="fh-refresh" id="fhRefresh" aria-label="Refresh">⟳</button>
+      </div>
+    </div>
+
+    <div class="fh-ring-wrap">
+      <svg class="fh-ring" viewBox="0 0 220 220" aria-hidden="true">
+        <circle class="fh-ring-track" cx="110" cy="110" r="96" />
+        <circle class="fh-ring-fill" id="fhRingFill" cx="110" cy="110" r="96" />
+      </svg>
+      <div class="fh-ring-center">
+        <div class="fh-ring-num" id="fhSteps">—</div>
+        <div class="fh-ring-unit">steps</div>
+        <div class="fh-ring-label" id="fhStepsLabel">—</div>
+      </div>
+    </div>
+
+    <div class="fh-stages" id="fhStages" style="display:none">
+      <div class="fh-stages-head">
+        <span class="fh-stages-eyebrow">Sleep stages</span>
+        <span class="fh-stages-meta" id="fhStagesMeta"></span>
+      </div>
+      <div class="fh-stages-bar">
+        <div class="fh-stage fh-stage-rem"   id="fhStageRem"   style="width:0%"></div>
+        <div class="fh-stage fh-stage-deep"  id="fhStageDeep"  style="width:0%"></div>
+        <div class="fh-stage fh-stage-light" id="fhStageLight" style="width:0%"></div>
+        <div class="fh-stage fh-stage-awake" id="fhStageAwake" style="width:0%"></div>
+      </div>
+      <div class="fh-stages-legend">
+        <div class="fh-stages-leg"><span class="fh-stages-dot d-rem"></span>REM <span class="fh-stages-num" id="fhStageRemTxt">—</span></div>
+        <div class="fh-stages-leg"><span class="fh-stages-dot d-deep"></span>Deep <span class="fh-stages-num" id="fhStageDeepTxt">—</span></div>
+        <div class="fh-stages-leg"><span class="fh-stages-dot d-light"></span>Light <span class="fh-stages-num" id="fhStageLightTxt">—</span></div>
+        <div class="fh-stages-leg"><span class="fh-stages-dot d-awake"></span>Awake <span class="fh-stages-num" id="fhStageAwakeTxt">—</span></div>
+      </div>
+    </div>
+
+    <div class="fh-stats">
+      <div class="fh-stat"><div class="fh-stat-label">Active</div><div class="fh-stat-value" id="fhActive">—</div><div class="fh-stat-sub">min</div></div>
+      <div class="fh-stat"><div class="fh-stat-label">Calories</div><div class="fh-stat-value" id="fhCalories">—</div><div class="fh-stat-sub">kcal</div></div>
+      <div class="fh-stat"><div class="fh-stat-label">Avg HR</div><div class="fh-stat-value" id="fhAvgHr">—</div><div class="fh-stat-sub">bpm</div></div>
+      <div class="fh-stat"><div class="fh-stat-label">RHR</div><div class="fh-stat-value" id="fhRhr">—</div><div class="fh-stat-sub">bpm</div></div>
+    </div>
+
+    <div class="fh-bio" id="fhBio">
+      <div class="fh-bio-item"><span class="fh-bio-label">HRV</span><span class="fh-bio-val" id="fhHrv">—</span></div>
+      <div class="fh-bio-item"><span class="fh-bio-label">Blood O₂</span><span class="fh-bio-val" id="fhSpo2">—</span></div>
+      <div class="fh-bio-item"><span class="fh-bio-label">Resp rate</span><span class="fh-bio-val" id="fhResp">—</span></div>
+    </div>
+
+    <div class="fh-status" id="fhStatus"></div>
+  </div>
+
   <div class="section-title">Daily Stack</div>
 
   <div class="stack-card">
@@ -513,11 +622,6 @@ main {
       </div>
     </div>
   </div>
-
-  <section id="water" class="water-embed">
-    <div class="section-title">Water Tracker</div>
-    <iframe src="po-water.html" class="water-iframe" loading="lazy" title="Water Tracker"></iframe>
-  </section>
 
   <div class="attribution">// editable template · all data stays in your browser</div>
 </main>
@@ -1048,6 +1152,133 @@ document.addEventListener('DOMContentLoaded', function () {
     onApplied: function () { window.dispatchEvent(new Event('storage')); }
   });
 });
+</script>
+
+<script>
+/* ===== Fitbit / Google Health card ===== */
+(function () {
+  'use strict';
+  const RING_C = 603.19;          // 2*pi*96
+  const STEP_GOAL = 10000;
+  const $ = (id) => document.getElementById(id);
+
+  function secToStr(s) {
+    const iso = String(s || '').replace('s', '');
+    const n = parseFloat(iso) || 0;
+    return n;
+  }
+  function ymd(iso) { return String(iso || '').slice(0, 10); }
+
+  // Recursively find the first numeric value whose key matches `re`.
+  function deepFind(obj, re, depth) {
+    if (obj == null || depth > 6) return null;
+    if (typeof obj === 'object') {
+      for (const k of Object.keys(obj)) {
+        const v = obj[k];
+        if (re.test(k)) {
+          if (typeof v === 'number') return v;
+          if (typeof v === 'string' && v !== '' && !isNaN(Number(v))) return Number(v);
+        }
+      }
+      for (const k of Object.keys(obj)) {
+        const nested = deepFind(obj[k], re, (depth || 0) + 1);
+        if (nested != null) return nested;
+      }
+    }
+    return null;
+  }
+  function latestPoint(arr) {
+    if (!Array.isArray(arr) || !arr.length) return null;
+    return arr[arr.length - 1];
+  }
+
+  function setRing(pct) {
+    const fill = $('fhRingFill');
+    const clamped = Math.max(0, Math.min(1, pct));
+    fill.style.strokeDashoffset = String(RING_C * (1 - clamped));
+  }
+
+  function render(data) {
+    // ---- Activity from exercise (known shape) ----
+    const ex = Array.isArray(data.exercise) ? data.exercise : [];
+    // group by day, use the most recent day that has data
+    const byDay = {};
+    ex.forEach((p) => {
+      const d = ymd(p && p.exercise && p.exercise.interval && p.exercise.interval.startTime);
+      if (!d) return;
+      (byDay[d] = byDay[d] || []).push(p);
+    });
+    const days = Object.keys(byDay).sort();
+    const latestDay = days[days.length - 1];
+    const todays = latestDay ? byDay[latestDay] : [];
+
+    let steps = 0, cal = 0, activeSec = 0, hrSum = 0, hrN = 0;
+    todays.forEach((p) => {
+      const m = (p.exercise && p.exercise.metricsSummary) || {};
+      steps += parseInt(m.steps || 0) || 0;
+      cal += Number(m.caloriesKcal || 0) || 0;
+      activeSec += secToStr(p.exercise && p.exercise.activeDuration);
+      const hr = parseInt(m.averageHeartRateBeatsPerMinute || 0) || 0;
+      if (hr) { hrSum += hr; hrN++; }
+    });
+
+    $('fhSteps').textContent = steps ? steps.toLocaleString('da-DK') : '—';
+    setRing(steps / STEP_GOAL);
+    if (latestDay) {
+      const isToday = latestDay === new Date().toISOString().slice(0, 10);
+      $('fhStepsLabel').textContent = (isToday ? 'today' : latestDay) +
+        ' · ' + Math.round((steps / STEP_GOAL) * 100) + '% of ' + STEP_GOAL.toLocaleString('da-DK');
+    } else {
+      $('fhStepsLabel').textContent = 'no activity logged yet';
+    }
+    $('fhActive').textContent = activeSec ? Math.round(activeSec / 60) : '—';
+    $('fhCalories').textContent = cal ? Math.round(cal) : '—';
+    $('fhAvgHr').textContent = hrN ? Math.round(hrSum / hrN) : '—';
+
+    // ---- Heart metrics (defensive extraction) ----
+    const rhr = deepFind(latestPoint(data['daily-resting-heart-rate']), /bpm|resting|beatsPerMinute/i, 0);
+    $('fhRhr').textContent = rhr != null ? Math.round(rhr) : '—';
+
+    const hrv = deepFind(latestPoint(data['daily-heart-rate-variability']), /rmssd|hrv|milli|ms/i, 0);
+    $('fhHrv').textContent = hrv != null ? Math.round(hrv) + ' ms' : '—';
+
+    const spo2 = deepFind(latestPoint(data['daily-oxygen-saturation']), /percent|saturation|spo2|oxygen|avg/i, 0);
+    $('fhSpo2').textContent = spo2 != null ? Math.round(spo2) + '%' : '—';
+
+    const resp = deepFind(latestPoint(data['daily-respiratory-rate']), /breath|respiratory|rate|rpm/i, 0);
+    $('fhResp').textContent = resp != null ? (Math.round(resp * 10) / 10) + ' br/min' : '—';
+
+    // ---- Status line ----
+    const missing = [];
+    if (rhr == null) missing.push('RHR');
+    if (hrv == null) missing.push('HRV');
+    if (spo2 == null) missing.push('SpO₂');
+    if (resp == null) missing.push('resp');
+    $('fhStatus').textContent = missing.length
+      ? 'Nogle felter mangler data endnu (' + missing.join(', ') + ') — bær armbåndet natten over.'
+      : '';
+    $('fhUpdated').textContent = new Date().toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  async function load() {
+    const btn = $('fhRefresh');
+    if (btn) btn.classList.add('spin');
+    try {
+      const r = await fetch('/api/health');
+      const data = await r.json();
+      if (data && !data.error) render(data);
+      else $('fhStatus').textContent = 'Kunne ikke hente data: ' + (data.error || 'ukendt fejl');
+    } catch (e) {
+      $('fhStatus').textContent = 'Kunne ikke nå /api/health.';
+    } finally {
+      setTimeout(() => btn && btn.classList.remove('spin'), 400);
+    }
+  }
+
+  const rf = $('fhRefresh');
+  if (rf) rf.addEventListener('click', load);
+  load();
+})();
 </script>
 </body>
 </html>
