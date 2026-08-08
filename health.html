@@ -172,7 +172,8 @@ main {
 .sl-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .sl-ring-num { font-size: 30px; font-weight: 700; letter-spacing: -0.04em; color: var(--text-primary); line-height: 1; font-variant-numeric: tabular-nums; }
 .sl-ring-unit { font-size: 8.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-tertiary); margin-top: 6px; }
-.sl-summary-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.sl-summary-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+@media (max-width: 560px) { .sl-summary-grid { grid-template-columns: repeat(2,1fr); } }
 .sl-sum { background: rgba(255,255,255,0.025); border-radius: 12px; padding: 11px 8px; text-align: center; }
 .sl-sum-label { font-size: 9px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; margin-bottom: 6px; }
 .sl-sum-value { font-size: 17px; font-weight: 700; color: var(--text-primary); line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
@@ -684,6 +685,7 @@ main {
         <div class="sl-sum"><div class="sl-sum-label">Varighed</div><div class="sl-sum-value" id="slDuration">—</div><div class="sl-sum-sub">i nat</div></div>
         <div class="sl-sum"><div class="sl-sum-label">Effektivitet</div><div class="sl-sum-value" id="slEff">—</div><div class="sl-sum-sub">%</div></div>
         <div class="sl-sum"><div class="sl-sum-label">Sengetid</div><div class="sl-sum-value" id="slBedtime">—</div><div class="sl-sum-sub" id="slWake">—</div></div>
+        <div class="sl-sum"><div class="sl-sum-label">Vejrtrækning</div><div class="sl-sum-value" id="slResp">—</div><div class="sl-sum-sub">/min i søvn</div></div>
       </div>
     </div>
 
@@ -749,8 +751,12 @@ main {
           <div id="slChartPulse"><div class="sl-chart-empty">Ingen data endnu</div></div>
         </div>
         <div class="sl-chart">
-          <div class="sl-chart-head"><span class="sl-chart-title">Sovepuls <span class="sl-score-est">· non-REM</span></span><span class="sl-chart-avg" id="slAvgSleepPulse"></span></div>
+          <div class="sl-chart-head"><span class="sl-chart-title">Dyb-søvn puls <span class="sl-score-est">· non-REM</span></span><span class="sl-chart-avg" id="slAvgSleepPulse"></span></div>
           <div id="slChartSleepPulse"><div class="sl-chart-empty">Ingen data endnu</div></div>
+        </div>
+        <div class="sl-chart">
+          <div class="sl-chart-head"><span class="sl-chart-title">Hudtemperatur <span class="sl-score-est">· vs. baseline</span></span><span class="sl-chart-avg" id="slAvgTemp"></span></div>
+          <div id="slChartTemp"><div class="sl-chart-empty">Ingen data endnu</div></div>
         </div>
       </div>
     </div>
@@ -1714,6 +1720,36 @@ document.addEventListener('DOMContentLoaded', function () {
     return byDay;
   }
 
+  // Breathing rate during sleep -> { 'YYYY-MM-DD': breaths/min }.
+  // Source: dailyRespiratoryRate.breathsPerMinute.
+  function slRespDays(arr) {
+    if (!Array.isArray(arr)) return {};
+    const byDay = {};
+    arr.forEach(p => {
+      const r = p && p.dailyRespiratoryRate;
+      if (r && r.date && r.breathsPerMinute != null) {
+        const d = r.date, bpm = Number(r.breathsPerMinute);
+        if (!isNaN(bpm) && bpm > 0) byDay[`${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`] = bpm;
+      }
+    });
+    return byDay;
+  }
+
+  // Nightly skin-temperature deviation from baseline (°C) -> { 'YYYY-MM-DD': delta }.
+  // Source: dailySleepTemperatureDerivations.{nightlyTemperatureCelsius,baselineTemperatureCelsius}.
+  function slTempDays(arr) {
+    if (!Array.isArray(arr)) return {};
+    const byDay = {};
+    arr.forEach(p => {
+      const t = p && p.dailySleepTemperatureDerivations;
+      if (t && t.date && t.nightlyTemperatureCelsius != null && t.baselineTemperatureCelsius != null) {
+        const d = t.date, delta = Number(t.nightlyTemperatureCelsius) - Number(t.baselineTemperatureCelsius);
+        if (!isNaN(delta)) byDay[`${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`] = delta;
+      }
+    });
+    return byDay;
+  }
+
   function slRenderHypnogram(sess) {
     const wrap = $('slHypnoWrap');
     if (!wrap) return;
@@ -1796,6 +1832,8 @@ document.addEventListener('DOMContentLoaded', function () {
     $('slEff').textContent = last.efficiency != null ? Math.round(last.efficiency) : '—';
     $('slBedtime').textContent = slClockOff(lp.startMs, lp.startOff);
     $('slWake').textContent = '→ ' + slClockOff(lp.endMs, lp.endOff);
+    const respMap = slRespDays(data['daily-respiratory-rate']);
+    $('slResp').textContent = respMap[last.date] != null ? (Math.round(respMap[last.date] * 10) / 10) : '—';
 
     // ---- Stage bar (last night): deep / light / rem / awake, uro = # opvågninger ----
     const sm = last.stageMin, sTot = sm.deep + sm.light + sm.rem + sm.awake;
@@ -1839,6 +1877,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const sPulseItems = days.map(d => ({ label: lbl(d), value: sPulseMap[d.date] != null ? sPulseMap[d.date] : null, display: sPulseMap[d.date] != null ? sPulseMap[d.date] : '' }));
     slRenderLine('slChartSleepPulse', sPulseItems, { color: '#F48FB1' });
 
+    // Skin temperature deviation from baseline (°C)
+    const tempMap = slTempDays(data['daily-sleep-temperature-derivations']);
+    const tempFmt = v => (v > 0 ? '+' : '') + (Math.round(v * 10) / 10).toFixed(1) + '°';
+    const tempItems = days.map(d => ({ label: lbl(d), value: tempMap[d.date] != null ? Math.round(tempMap[d.date] * 10) / 10 : null, display: tempMap[d.date] != null ? tempFmt(tempMap[d.date]) : '' }));
+    slRenderLine('slChartTemp', tempItems, { color: '#FF9E7A', axisFmt: v => (v > 0 ? '+' : '') + v.toFixed(1) + '°' });
+
     const avg = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
     const avgHrs = avg(days.map(d => d.total));
     const avgScore = avg(days.filter(d => d.score != null).map(d => d.score));
@@ -1850,6 +1894,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const avgPulse = avg(pulseVals);
     const sPulseVals = sPulseItems.map(p => p.value).filter(v => v != null);
     const avgSleepPulse = avg(sPulseVals);
+    const tempVals = tempItems.map(p => p.value).filter(v => v != null);
+    const avgTemp = avg(tempVals);
     if (avgHrs != null) $('slAvgHours').textContent = 'gns ' + slFmtDur(avgHrs);
     if (avgScore != null) $('slAvgScore').textContent = 'gns ' + Math.round(avgScore);
     if (avgPrim != null) $('slAvgPrimary').textContent = 'gns ' + slFmtDur(avgPrim);
@@ -1858,6 +1904,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (avgDeep != null) $('slAvgDeep').textContent = 'gns ' + slFmtDur(avgDeep);
     if (avgPulse != null) $('slAvgPulse').textContent = 'gns ' + Math.round(avgPulse) + ' bpm';
     if (avgSleepPulse != null) $('slAvgSleepPulse').textContent = 'gns ' + Math.round(avgSleepPulse) + ' bpm';
+    if (avgTemp != null) $('slAvgTemp').textContent = 'gns ' + (avgTemp > 0 ? '+' : '') + (Math.round(avgTemp * 10) / 10).toFixed(1) + '°';
 
     $('slUpdated').textContent = 'opdateret ' + new Date().toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
   }

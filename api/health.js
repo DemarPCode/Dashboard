@@ -49,6 +49,7 @@ const DEFAULT_TYPES = [
   'daily-heart-rate-variability',
   'daily-oxygen-saturation',
   'daily-respiratory-rate',
+  'daily-sleep-temperature-derivations',
 ];
 
 async function getAccessToken() {
