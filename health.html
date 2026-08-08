@@ -127,6 +127,7 @@ main {
 .fh-week-svg { width: 100%; height: auto; display: block; overflow: visible; }
 .fh-week-bar { transition: height 0.6s cubic-bezier(0.22,1,0.36,1), y 0.6s cubic-bezier(0.22,1,0.36,1); }
 .fh-week-x { fill: var(--text-tertiary); font-size: 8px; font-family: var(--font-mono); }
+.fh-week-val { fill: var(--text-secondary); font-size: 8px; font-weight: 700; font-family: var(--font-mono); }
 .fh-week-goal { fill: #6BE3A4; font-size: 7.5px; font-weight: 700; font-family: var(--font-mono); }
 
 .fh-stages { margin-bottom: 22px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,0.05); }
@@ -1417,6 +1418,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const x = left + i * (bw + gap), y = top + plotH - h;
       const fill = it.today ? '#00B0B9' : 'rgba(0,176,185,0.55)';
       svg += `<rect class="fh-week-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="${(bw / 2.4).toFixed(1)}" fill="${fill}"/>`;
+      if (it.v > 0) svg += `<text class="fh-week-val" x="${(x + bw / 2).toFixed(1)}" y="${Math.max(y - 4, 8).toFixed(1)}" text-anchor="middle">${it.v.toLocaleString('da-DK')}</text>`;
       svg += `<text class="fh-week-x" x="${(x + bw / 2).toFixed(1)}" y="${H - 4}" text-anchor="middle">${it.wd}</text>`;
     });
     // 10k goal line + label
