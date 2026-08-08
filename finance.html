@@ -1991,7 +1991,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       </select>
       <button class="fin-btn fin-btn-primary fin-span2" id="phAdd">+ Tilføj beholdning</button>
     </div>
-    <div class="fin-note" id="phTip">💡 Ticker skal matche Yahoo Finance. Københavns-aktier ender på <b>.CO</b> (fx NOVO-B.CO, DSV.CO), amerikanske bruger symbolet direkte (fx AAPL). Ingen ticker? Sæt en manuel kurs.</div>
+    <div class="fin-note" id="phTip">💡 Ticker skal matche Yahoo Finance. Københavns-aktier ender på <b>.CO</b> (fx NOVO-B.CO, DSV.CO), tyske børs-ETF'er (Xetra) på <b>.DE</b> (fx VWCE.DE, EUNL.DE), amerikanske bruger symbolet direkte (fx AAPL). Valuta (DKK/EUR/USD) omregnes automatisk. Ingen ticker? Sæt en manuel kurs.</div>
   </div>
 
   <div class="fin-card">
@@ -2027,7 +2027,64 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 <!-- ===== KONTI ===== -->
 <div class="section" data-section="accounts" hidden>
   <div class="section-title"><span class="section-title-text">KONTI &amp; CASHFLOW</span></div>
-  <div class="fin-card"><div class="fin-empty">Konti, cashflow-tracker og indkomst bygges her.</div></div>
+
+  <div class="fin-card">
+    <div class="fin-h">Tilføj konto</div>
+    <div class="fin-form">
+      <input class="fin-input fin-span2" id="acName" placeholder="Kontonavn (fx Danske Bank Opsparing)" autocomplete="off" />
+      <input class="fin-input" id="acInst" placeholder="Institut (fx Danske Bank)" list="acInstList" autocomplete="off" />
+      <datalist id="acInstList"></datalist>
+      <select class="fin-select" id="acType">
+        <option value="opsparing">Opsparing</option>
+        <option value="aktiedepot">Aktiedepot</option>
+        <option value="ask">Aktiesparekonto</option>
+        <option value="boern">Børneopsparing</option>
+      </select>
+      <input class="fin-input fin-span2" id="acBal" type="number" inputmode="decimal" placeholder="Saldo (DKK)" />
+      <button class="fin-btn fin-btn-primary fin-span2" id="acAdd">+ Tilføj konto</button>
+    </div>
+    <div class="fin-note">Kontantsaldi tæller med i din <b>net worth</b> og i cirkeldiagrammerne (depot + kontotype). Aktier hører til under Portefølje.</div>
+  </div>
+
+  <div class="fin-card">
+    <div class="fin-h">Dine konti</div>
+    <div id="acList"><div class="fin-empty">Ingen konti endnu.</div></div>
+  </div>
+
+  <div class="fin-card">
+    <div class="fin-h">Cashflow</div>
+    <div class="fin-form">
+      <select class="fin-select fin-span2" id="cfAcc"></select>
+      <input class="fin-input" id="cfDate" type="date" />
+      <input class="fin-input" id="cfAmt" type="number" inputmode="decimal" placeholder="Beløb (DKK)" />
+      <select class="fin-select" id="cfDir">
+        <option value="in">Indtægt</option>
+        <option value="out">Udgift</option>
+      </select>
+      <input class="fin-input" id="cfCat" placeholder="Kategori (fx Løn, Husleje)" autocomplete="off" />
+      <input class="fin-input fin-span2" id="cfNote" placeholder="Note (valgfri)" autocomplete="off" />
+      <button class="fin-btn fin-btn-primary fin-span2" id="cfAdd">+ Tilføj postering</button>
+    </div>
+    <div class="fin-cal-stats" id="cfSummary"></div>
+    <div id="cfChart" style="margin-top:12px"></div>
+    <div id="cfList" style="margin-top:8px"></div>
+  </div>
+
+  <div class="fin-card">
+    <div class="fin-h">Indkomst &amp; side hustle</div>
+    <div class="fin-form">
+      <input class="fin-input fin-span2" id="inSrc" placeholder="Kilde (fx Fritidsjob, Freelance)" autocomplete="off" />
+      <input class="fin-input" id="inDate" type="date" />
+      <input class="fin-input" id="inAmt" type="number" inputmode="decimal" placeholder="Beløb (DKK)" />
+      <select class="fin-select fin-span2" id="inKind">
+        <option value="job">Arbejde / løn</option>
+        <option value="side">Side hustle</option>
+      </select>
+      <button class="fin-btn fin-btn-primary fin-span2" id="inAdd">+ Tilføj indkomst</button>
+    </div>
+    <div class="fin-cal-stats" id="inSummary"></div>
+    <div id="inList" style="margin-top:8px"></div>
+  </div>
 </div>
 
 <!-- ===== SKAT ===== -->
@@ -3681,9 +3738,13 @@ document.addEventListener('DOMContentLoaded', function () {
   function renderPies() {
     const vals = holdings.map(h => ({ h, v: valuate(h).value })).filter(x => x.v > 0);
     donut('pieStock', vals.map((x, i) => ({ label: x.h.name || x.h.ticker || '—', value: x.v, color: PALETTE[i % PALETTE.length] })));
+    // depot + kontotype pies include cash accounts too
+    const accts = (get(K_ACCT) || []).filter(a => (Number(a.balance) || 0) > 0);
     const byDepot = {}; vals.forEach(x => { const d = x.h.depot || 'Ukendt'; byDepot[d] = (byDepot[d] || 0) + x.v; });
+    accts.forEach(a => { const d = a.institution || a.name || 'Bank'; byDepot[d] = (byDepot[d] || 0) + (Number(a.balance) || 0); });
     donut('pieDepot', Object.keys(byDepot).map((d, i) => ({ label: d, value: byDepot[d], color: PALETTE[i % PALETTE.length] })));
     const byType = {}; vals.forEach(x => { const t = x.h.type || 'aktiedepot'; byType[t] = (byType[t] || 0) + x.v; });
+    accts.forEach(a => { const t = a.type || 'opsparing'; byType[t] = (byType[t] || 0) + (Number(a.balance) || 0); });
     donut('pieType', Object.keys(byType).map(t => ({ label: TYPE_LABEL[t] || t, value: byType[t], color: TYPE_COLOR[t] || '#999' })));
   }
 
@@ -3900,6 +3961,152 @@ document.addEventListener('DOMContentLoaded', function () {
     window.addEventListener('storage', renderAll);
     renderAll();
     loadFX().then(() => { if (holdings.length) refresh(); });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+
+<script>
+/* ===== Konti: accounts, cashflow tracker, income & side hustle ===== */
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const get = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+  const set = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const fmtDKK = (n) => 'DKK ' + Math.round(n || 0).toLocaleString('da-DK');
+  const kr = (n) => (n >= 0 ? '+' : '') + Math.round(n).toLocaleString('da-DK') + ' kr';
+  const TYPE_LABEL = { aktiedepot: 'Aktiedepot', ask: 'Aktiesparekonto', boern: 'Børneopsparing', opsparing: 'Opsparing' };
+  const TYPE_COLOR = { aktiedepot: '#6EE7B7', ask: '#7DD3FC', boern: '#F2C063', opsparing: '#B794F4' };
+  const K_ACCT = 'fin:accounts', K_CF = 'fin:cashflow', K_IN = 'fin:income';
+  const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  const thisMonth = () => todayStr().slice(0, 7);
+  const touch = () => window.dispatchEvent(new Event('storage'));
+
+  // ---------- Accounts ----------
+  function renderAccounts() {
+    const accts = get(K_ACCT) || [];
+    const dl = $('acInstList'); if (dl) dl.innerHTML = Array.from(new Set(accts.map(a => a.institution).filter(Boolean))).map(i => `<option value="${esc(i)}"></option>`).join('');
+    const el = $('acList');
+    if (el) {
+      el.innerHTML = accts.length ? accts.map(a => {
+        const chip = `<span class="fin-chip" style="background:${(TYPE_COLOR[a.type] || '#888')}22;color:${TYPE_COLOR[a.type] || '#aaa'}">${TYPE_LABEL[a.type] || a.type}</span>`;
+        return `<div class="fin-hold" data-id="${a.id}">
+          <div><div class="fin-hold-name">${esc(a.name)}</div><div class="fin-hold-meta">${chip}${a.institution ? '<span>' + esc(a.institution) + '</span>' : ''}</div></div>
+          <div class="fin-hold-val"><div class="fin-hold-v1">${fmtDKK(a.balance)}</div></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><button class="fin-hold-del" data-acedit="${a.id}">✎</button><button class="fin-hold-del" data-acdel="${a.id}">✕</button></div>
+        </div>`;
+      }).join('') : '<div class="fin-empty">Ingen konti endnu.</div>';
+    }
+    // cashflow account selector
+    const sel = $('cfAcc');
+    if (sel) {
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">Generel (ingen konto)</option>' + accts.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
+      if (cur) sel.value = cur;
+    }
+  }
+  function addAccount() {
+    const name = $('acName').value.trim(); if (!name) { $('acName').focus(); return; }
+    const accts = get(K_ACCT) || [];
+    accts.push({ id: uid(), name, institution: $('acInst').value.trim(), type: $('acType').value, balance: Number($('acBal').value) || 0 });
+    set(K_ACCT, accts);
+    ['acName', 'acInst', 'acBal'].forEach(id => $(id).value = '');
+    renderAccounts(); touch();
+  }
+
+  // ---------- Cashflow ----------
+  function renderCashflow() {
+    const items = (get(K_CF) || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    const m = thisMonth();
+    let inSum = 0, outSum = 0;
+    items.forEach(it => { if (String(it.date).slice(0, 7) === m) { if (it.amount >= 0) inSum += it.amount; else outSum += -it.amount; } });
+    const sEl = $('cfSummary');
+    if (sEl) sEl.innerHTML =
+      `<div class="fin-stat"><div class="fin-stat-l">Ind (md.)</div><div class="fin-stat-v fin-pos">${Math.round(inSum).toLocaleString('da-DK')}</div></div>` +
+      `<div class="fin-stat"><div class="fin-stat-l">Ud (md.)</div><div class="fin-stat-v fin-neg">${Math.round(outSum).toLocaleString('da-DK')}</div></div>` +
+      `<div class="fin-stat" style="grid-column:span 2"><div class="fin-stat-l">Netto (md.)</div><div class="fin-stat-v ${inSum - outSum >= 0 ? 'fin-pos' : 'fin-neg'}">${kr(inSum - outSum)}</div></div>`;
+    // cumulative balance chart (all entries, chronological)
+    const chrono = items.slice().sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    const chartEl = $('cfChart');
+    if (chartEl) {
+      if (chrono.length < 2) chartEl.innerHTML = '';
+      else {
+        let run = 0; const pts = chrono.map(it => { run += it.amount; return run; });
+        const min = Math.min(0, ...pts), max = Math.max(0, ...pts), rng = (max - min) || 1;
+        const W = 320, H = 70, n = pts.length;
+        const X = i => (n === 1 ? W / 2 : i / (n - 1) * W);
+        const Y = v => H - 6 - ((v - min) / rng) * (H - 12);
+        let d = ''; pts.forEach((v, i) => d += (d ? ' L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1));
+        const zeroY = Y(0).toFixed(1);
+        chartEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block"><line x1="0" y1="${zeroY}" x2="${W}" y2="${zeroY}" stroke="rgba(255,255,255,0.12)" stroke-width="0.6" stroke-dasharray="3 3"/><path d="${d}" fill="none" stroke="#6EE7B7" stroke-width="2" stroke-linejoin="round"/></svg><div class="fin-hero-sub" style="text-align:right">løbende saldo: ${kr(run)}</div>`;
+      }
+    }
+    const listEl = $('cfList');
+    if (listEl) {
+      listEl.innerHTML = items.slice(0, 40).map(it => {
+        const pos = it.amount >= 0;
+        return `<div class="fin-hold" data-id="${it.id}"><div><div class="fin-hold-name">${esc(it.category || (pos ? 'Indtægt' : 'Udgift'))}</div><div class="fin-hold-meta"><span>${it.date}</span>${it.note ? '<span>' + esc(it.note) + '</span>' : ''}</div></div><div class="fin-hold-val"><div class="fin-hold-v1 ${pos ? 'fin-pos' : 'fin-neg'}">${kr(it.amount)}</div></div><div><button class="fin-hold-del" data-cfdel="${it.id}">✕</button></div></div>`;
+      }).join('') || '<div class="fin-empty">Ingen posteringer endnu.</div>';
+    }
+  }
+  function addCashflow() {
+    const amt = Number($('cfAmt').value); if (!amt) { $('cfAmt').focus(); return; }
+    const dir = $('cfDir').value;
+    const items = get(K_CF) || [];
+    items.push({ id: uid(), accountId: $('cfAcc').value || '', date: $('cfDate').value || todayStr(), amount: dir === 'out' ? -Math.abs(amt) : Math.abs(amt), category: $('cfCat').value.trim(), note: $('cfNote').value.trim() });
+    set(K_CF, items);
+    ['cfAmt', 'cfCat', 'cfNote'].forEach(id => $(id).value = '');
+    renderCashflow();
+  }
+
+  // ---------- Income / side hustle ----------
+  function renderIncome() {
+    const items = (get(K_IN) || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    const m = thisMonth();
+    let job = 0, side = 0;
+    items.forEach(it => { if (String(it.date).slice(0, 7) === m) { if (it.kind === 'side') side += it.amount; else job += it.amount; } });
+    const sEl = $('inSummary');
+    if (sEl) sEl.innerHTML =
+      `<div class="fin-stat"><div class="fin-stat-l">Løn (md.)</div><div class="fin-stat-v">${Math.round(job).toLocaleString('da-DK')}</div></div>` +
+      `<div class="fin-stat"><div class="fin-stat-l">Side hustle (md.)</div><div class="fin-stat-v">${Math.round(side).toLocaleString('da-DK')}</div></div>` +
+      `<div class="fin-stat" style="grid-column:span 2"><div class="fin-stat-l">I alt (md.)</div><div class="fin-stat-v fin-pos">${Math.round(job + side).toLocaleString('da-DK')} kr</div></div>`;
+    const listEl = $('inList');
+    if (listEl) listEl.innerHTML = items.slice(0, 40).map(it => `<div class="fin-hold" data-id="${it.id}"><div><div class="fin-hold-name">${esc(it.source)}</div><div class="fin-hold-meta"><span class="fin-chip" style="background:${it.kind === 'side' ? '#F2C06322;color:#F2C063' : '#7DD3FC22;color:#7DD3FC'}">${it.kind === 'side' ? 'Side hustle' : 'Løn'}</span><span>${it.date}</span></div></div><div class="fin-hold-val"><div class="fin-hold-v1 fin-pos">+${Math.round(it.amount).toLocaleString('da-DK')} kr</div></div><div><button class="fin-hold-del" data-indel="${it.id}">✕</button></div></div>`).join('') || '<div class="fin-empty">Ingen indkomst endnu.</div>';
+  }
+  function addIncome() {
+    const amt = Number($('inAmt').value); if (!amt) { $('inAmt').focus(); return; }
+    const items = get(K_IN) || [];
+    items.push({ id: uid(), source: $('inSrc').value.trim() || 'Indkomst', date: $('inDate').value || todayStr(), amount: Math.abs(amt), kind: $('inKind').value });
+    set(K_IN, items);
+    ['inSrc', 'inAmt'].forEach(id => $(id).value = '');
+    renderIncome();
+  }
+
+  function renderAll() { renderAccounts(); renderCashflow(); renderIncome(); }
+
+  function init() {
+    const d = $('cfDate'); if (d && !d.value) d.value = todayStr();
+    const d2 = $('inDate'); if (d2 && !d2.value) d2.value = todayStr();
+    const b1 = $('acAdd'); if (b1) b1.addEventListener('click', addAccount);
+    const b2 = $('cfAdd'); if (b2) b2.addEventListener('click', addCashflow);
+    const b3 = $('inAdd'); if (b3) b3.addEventListener('click', addIncome);
+    document.addEventListener('click', (e) => {
+      const acDel = e.target.closest('[data-acdel]'); const acEd = e.target.closest('[data-acedit]');
+      const cfDel = e.target.closest('[data-cfdel]'); const inDel = e.target.closest('[data-indel]');
+      if (acDel) { let a = get(K_ACCT) || []; a = a.filter(x => x.id !== acDel.getAttribute('data-acdel')); set(K_ACCT, a); renderAccounts(); touch(); }
+      else if (acEd) {
+        const a = get(K_ACCT) || []; const it = a.find(x => x.id === acEd.getAttribute('data-acedit')); if (!it) return;
+        const bal = prompt('Ny saldo (DKK) for ' + it.name + ':', it.balance); if (bal === null) return;
+        it.balance = Number(bal) || 0; set(K_ACCT, a); renderAccounts(); touch();
+      }
+      else if (cfDel) { let a = get(K_CF) || []; a = a.filter(x => x.id !== cfDel.getAttribute('data-cfdel')); set(K_CF, a); renderCashflow(); }
+      else if (inDel) { let a = get(K_IN) || []; a = a.filter(x => x.id !== inDel.getAttribute('data-indel')); set(K_IN, a); renderIncome(); }
+    });
+    window.addEventListener('storage', renderAll);
+    renderAll();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
