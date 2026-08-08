@@ -645,14 +645,14 @@ main {
   const TEMPLATE_VERSION = 5;
 
   const STACK_DEFAULTS = [
-    { id: 'm1', name: 'XXXXX - Supplement of choice', dose: '', window: 'morning', note: 'how much MG, meal times, any data below', tag: null,    ordered: true  },
-    { id: 'm2', name: 'XXXXX - Supplement of choice', dose: '', window: 'morning', note: 'how much MG, meal times, any data below', tag: 'stack', ordered: true  },
-    { id: 'm3', name: 'XXXXX - Supplement of choice', dose: '', window: 'morning', note: 'how much MG, meal times, any data below', tag: null,    ordered: true  },
-    { id: 'l1', name: 'XXXXX - Supplement of choice', dose: '', window: 'lunch',   note: 'how much MG, meal times, any data below', tag: null,    ordered: true  },
-    { id: 'l2', name: 'XXXXX - Supplement of choice', dose: '', window: 'lunch',   note: 'how much MG, meal times, any data below', tag: null,    ordered: true  },
-    { id: 'e1', name: 'XXXXX - Supplement of choice', dose: '', window: 'evening', note: 'how much MG, meal times, any data below', tag: null,    ordered: true  },
-    { id: 'e2', name: 'XXXXX - Supplement of choice', dose: '', window: 'evening', note: 'how much MG, meal times, any data below', tag: 'not-ordered', ordered: false },
-    { id: 'e3', name: 'XXXXX - Supplement of choice', dose: '', window: 'evening', note: 'how much MG, meal times, any data below', tag: null,    ordered: true  },
+    { id: 'm1', name: 'XXXXX – Vælg tilskud', dose: '', window: 'morning', note: 'antal mg, spisetider, evt. data nedenfor', tag: null,    ordered: true  },
+    { id: 'm2', name: 'XXXXX – Vælg tilskud', dose: '', window: 'morning', note: 'antal mg, spisetider, evt. data nedenfor', tag: 'stack', ordered: true  },
+    { id: 'm3', name: 'XXXXX – Vælg tilskud', dose: '', window: 'morning', note: 'antal mg, spisetider, evt. data nedenfor', tag: null,    ordered: true  },
+    { id: 'l1', name: 'XXXXX – Vælg tilskud', dose: '', window: 'lunch',   note: 'antal mg, spisetider, evt. data nedenfor', tag: null,    ordered: true  },
+    { id: 'l2', name: 'XXXXX – Vælg tilskud', dose: '', window: 'lunch',   note: 'antal mg, spisetider, evt. data nedenfor', tag: null,    ordered: true  },
+    { id: 'e1', name: 'XXXXX – Vælg tilskud', dose: '', window: 'evening', note: 'antal mg, spisetider, evt. data nedenfor', tag: null,    ordered: true  },
+    { id: 'e2', name: 'XXXXX – Vælg tilskud', dose: '', window: 'evening', note: 'antal mg, spisetider, evt. data nedenfor', tag: 'not-ordered', ordered: false },
+    { id: 'e3', name: 'XXXXX – Vælg tilskud', dose: '', window: 'evening', note: 'antal mg, spisetider, evt. data nedenfor', tag: null,    ordered: true  },
   ];
 
   const STACK_WINDOWS = [
@@ -853,7 +853,7 @@ main {
             </div>
             <div class="stack-item-meta" data-edit="meta" data-id="${item.id}">${escapeHtml(metaText(item))}</div>
           </div>
-          <button class="stack-low-btn ${isLow ? 'is-low' : ''}" data-action="low" data-id="${item.id}">↓ Running low</button>
+          <button class="stack-low-btn ${isLow ? 'is-low' : ''}" data-action="low" data-id="${item.id}">↓ Ved at løbe tør</button>
           <button class="stack-item-del" data-action="del" data-id="${item.id}" aria-label="Delete">×</button>`;
 
         group.appendChild(row);
