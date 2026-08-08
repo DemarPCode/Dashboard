@@ -120,6 +120,15 @@ main {
 .fh-ring-unit { font-size: 10px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-tertiary); margin-top: 10px; }
 .fh-ring-label { font-size: 12.5px; font-weight: 600; margin-top: 6px; color: var(--text-secondary); }
 
+.fh-steps-week { margin: 0 0 22px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
+.fh-week-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.fh-week-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-tertiary); }
+.fh-week-gns { font-size: 11px; color: var(--text-secondary); font-family: var(--font-mono); font-weight: 600; }
+.fh-week-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.fh-week-bar { transition: height 0.6s cubic-bezier(0.22,1,0.36,1), y 0.6s cubic-bezier(0.22,1,0.36,1); }
+.fh-week-x { fill: var(--text-tertiary); font-size: 8px; font-family: var(--font-mono); }
+.fh-week-goal { fill: #6BE3A4; font-size: 7.5px; font-weight: 700; font-family: var(--font-mono); }
+
 .fh-stages { margin-bottom: 22px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,0.05); }
 .fh-stages-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
 .fh-stages-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-tertiary); }
@@ -624,6 +633,8 @@ main {
         <div class="fh-ring-label" id="fhStepsLabel">—</div>
       </div>
     </div>
+
+    <div class="fh-steps-week" id="fhStepsWeek"></div>
 
     <div class="fh-stages" id="fhStages" style="display:none">
       <div class="fh-stages-head">
@@ -1379,6 +1390,44 @@ document.addEventListener('DOMContentLoaded', function () {
     fill.style.strokeDashoffset = String(RING_C * (1 - clamped));
   }
 
+  // Weekly steps bar chart (app-style: 7 bars + 10k goal line + average).
+  function renderStepsWeek(sd) {
+    const el = $('fhStepsWeek');
+    if (!el) return;
+    const pd = (x) => String(x).padStart(2, '0');
+    const WD = ['S', 'M', 'T', 'O', 'T', 'F', 'L'];
+    const now = new Date();
+    const items = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now); d.setDate(now.getDate() - i);
+      const key = `${d.getFullYear()}-${pd(d.getMonth() + 1)}-${pd(d.getDate())}`;
+      items.push({ v: sd[key] || 0, wd: WD[d.getDay()], today: i === 0 });
+    }
+    const vals = items.map(i => i.v);
+    const withData = vals.filter(v => v > 0);
+    const gns = withData.length ? Math.round(withData.reduce((a, b) => a + b, 0) / withData.length) : 0;
+    const maxV = Math.max(STEP_GOAL, Math.max.apply(null, vals), 1);
+    const W = 300, H = 132, top = 12, bottom = 16, left = 2, right = 26;
+    const plotW = W - left - right, plotH = H - top - bottom, n = 7;
+    const gap = 10, bw = (plotW - gap * (n - 1)) / n;
+    const goalY = top + plotH - (STEP_GOAL / maxV) * plotH;
+    let svg = `<svg class="fh-week-svg" viewBox="0 0 ${W} ${H}" role="img">`;
+    items.forEach((it, i) => {
+      const h = Math.max(it.v > 0 ? (it.v / maxV) * plotH : 0, it.v > 0 ? 2 : 0);
+      const x = left + i * (bw + gap), y = top + plotH - h;
+      const fill = it.today ? '#00B0B9' : 'rgba(0,176,185,0.55)';
+      svg += `<rect class="fh-week-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="${(bw / 2.4).toFixed(1)}" fill="${fill}"/>`;
+      svg += `<text class="fh-week-x" x="${(x + bw / 2).toFixed(1)}" y="${H - 4}" text-anchor="middle">${it.wd}</text>`;
+    });
+    // 10k goal line + label
+    svg += `<line x1="${left}" y1="${goalY.toFixed(1)}" x2="${(left + plotW).toFixed(1)}" y2="${goalY.toFixed(1)}" stroke="#6BE3A4" stroke-width="1" stroke-dasharray="3 3" opacity="0.8"/>`;
+    svg += `<text class="fh-week-goal" x="${W - right + 4}" y="${(goalY + 3).toFixed(1)}">10k</text>`;
+    svg += '</svg>';
+    el.innerHTML =
+      `<div class="fh-week-head"><span class="fh-week-eyebrow">Skridt · 7 dage</span>` +
+      `<span class="fh-week-gns">gns ${gns.toLocaleString('da-DK')}</span></div>` + svg;
+  }
+
   function render(data) {
     // ---- Activity from exercise (known shape) ----
     const ex = Array.isArray(data.exercise) ? data.exercise : [];
@@ -1393,25 +1442,25 @@ document.addEventListener('DOMContentLoaded', function () {
     const latestDay = days[days.length - 1];
     const todays = latestDay ? byDay[latestDay] : [];
 
-    let steps = 0, cal = 0, activeSec = 0, hrSum = 0, hrN = 0;
+    let cal = 0, activeSec = 0, hrSum = 0, hrN = 0;
     todays.forEach((p) => {
       const m = (p.exercise && p.exercise.metricsSummary) || {};
-      steps += parseInt(m.steps || 0) || 0;
       cal += Number(m.caloriesKcal || 0) || 0;
       activeSec += secToStr(p.exercise && p.exercise.activeDuration);
       const hr = parseInt(m.averageHeartRateBeatsPerMinute || 0) || 0;
       if (hr) { hrSum += hr; hrN++; }
     });
 
+    // ---- Steps: real daily total (Fitbit), aggregated server-side ----
+    const sd = data.stepsDaily || {};
+    const pd = (x) => String(x).padStart(2, '0');
+    const _now = new Date();
+    const todayKey = `${_now.getFullYear()}-${pd(_now.getMonth() + 1)}-${pd(_now.getDate())}`;
+    const steps = sd[todayKey] != null ? sd[todayKey] : 0;
     $('fhSteps').textContent = steps ? steps.toLocaleString('da-DK') : '—';
     setRing(steps / STEP_GOAL);
-    if (latestDay) {
-      const isToday = latestDay === new Date().toISOString().slice(0, 10);
-      $('fhStepsLabel').textContent = (isToday ? 'i dag' : latestDay) +
-        ' · ' + Math.round((steps / STEP_GOAL) * 100) + '% af ' + STEP_GOAL.toLocaleString('da-DK');
-    } else {
-      $('fhStepsLabel').textContent = 'ingen aktivitet logget endnu';
-    }
+    $('fhStepsLabel').textContent = 'i dag · ' + Math.round((steps / STEP_GOAL) * 100) + '% af ' + STEP_GOAL.toLocaleString('da-DK');
+    renderStepsWeek(sd);
     $('fhActive').textContent = activeSec ? Math.round(activeSec / 60) : '—';
     $('fhCalories').textContent = cal ? Math.round(cal) : '—';
     $('fhAvgHr').textContent = hrN ? Math.round(hrSum / hrN) : '—';

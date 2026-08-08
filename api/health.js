@@ -42,7 +42,6 @@ const DISCOVER_TYPES = [
 
 // The set the finished card will actually use (trimmed to what works).
 const DEFAULT_TYPES = [
-  'steps',
   'exercise',
   'sleep',
   'daily-resting-heart-rate',
@@ -74,13 +73,66 @@ async function getAccessToken() {
   return j.access_token;
 }
 
-async function fetchType(token, type) {
-  const url = 'https://health.googleapis.com/v4/users/me/dataTypes/' + type + '/dataPoints';
+async function fetchType(token, type, params) {
+  const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+  const url = 'https://health.googleapis.com/v4/users/me/dataTypes/' + type + '/dataPoints' + qs;
   const r = await fetch(url, {
     headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' },
   });
   const body = await r.json().catch(() => ({}));
   return { status: r.status, body };
+}
+
+// Steps arrive as many tiny interval dataPoints across MULTIPLE platforms
+// (Apple HEALTH_KIT + Fitbit) and are PAGINATED. Sum per civil-day per
+// platform, then prefer Fitbit (matches the Fitbit app's daily total) so we
+// don't double-count the phone + band. Returns { 'YYYY-MM-DD': steps }.
+async function fetchStepsDaily(token) {
+  const byDayPlat = {};
+  let pageToken = null, pages = 0;
+  const cutoff = Date.now() - 9 * 24 * 3600 * 1000;
+  while (pages < 8) {
+    const params = { pageSize: '1000' };
+    if (pageToken) params.pageToken = pageToken;
+    let res;
+    try { res = await fetchType(token, 'steps', params); } catch (e) { break; }
+    if (!res || res.status !== 200 || !res.body) break;
+    const pts = res.body.dataPoints || [];
+    for (const p of pts) {
+      const s = p && p.steps;
+      if (!s || !s.interval) continue;
+      const c = parseInt(s.count || '0', 10) || 0;
+      if (!c) continue;
+      const plat = (p.dataSource && p.dataSource.platform) || 'UNKNOWN';
+      const cs = s.interval.civilStartTime && s.interval.civilStartTime.date;
+      let key = null;
+      if (cs && cs.year) {
+        key = cs.year + '-' + String(cs.month).padStart(2, '0') + '-' + String(cs.day).padStart(2, '0');
+      } else {
+        const t = Date.parse(s.interval.startTime);
+        if (!isNaN(t)) {
+          const off = parseInt(String(s.interval.startUtcOffset || '0').replace('s', ''), 10) || 0;
+          const d = new Date(t + off * 1000);
+          key = d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
+        }
+      }
+      if (!key) continue;
+      (byDayPlat[key] = byDayPlat[key] || {});
+      byDayPlat[key][plat] = (byDayPlat[key][plat] || 0) + c;
+    }
+    pageToken = res.body.nextPageToken;
+    pages++;
+    if (!pageToken) break;
+    const last = pts[pts.length - 1];
+    const lt = last && last.steps && last.steps.interval && Date.parse(last.steps.interval.startTime);
+    if (lt && lt < cutoff) break;
+  }
+  const out = {};
+  for (const day of Object.keys(byDayPlat)) {
+    const plats = byDayPlat[day];
+    out[day] = plats.FITBIT != null ? plats.FITBIT : Math.max.apply(null, Object.values(plats));
+  }
+  return out;
 }
 
 export default async function handler(req, res) {
@@ -117,14 +169,18 @@ export default async function handler(req, res) {
 
     // Default: fetch the working set the card needs
     const result = {};
-    await Promise.all(DEFAULT_TYPES.map(async (t) => {
-      try {
-        const { status, body } = await fetchType(token, t);
-        result[t] = status === 200 ? (body.dataPoints || []) : { error: status };
-      } catch (e) {
-        result[t] = { error: String(e) };
-      }
-    }));
+    const [, stepsDaily] = await Promise.all([
+      Promise.all(DEFAULT_TYPES.map(async (t) => {
+        try {
+          const { status, body } = await fetchType(token, t);
+          result[t] = status === 200 ? (body.dataPoints || []) : { error: status };
+        } catch (e) {
+          result[t] = { error: String(e) };
+        }
+      })),
+      fetchStepsDaily(token).catch(() => ({})),
+    ]);
+    result.stepsDaily = stepsDaily;
     return res.status(200).json(result);
   } catch (e) {
     return res.status(500).json({ error: String(e) });
