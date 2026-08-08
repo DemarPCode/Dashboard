@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#050506">
 <meta name="color-scheme" content="dark">
-<title>Daily Stack — Customizable Template</title>
+<title>Dagligt tilskud</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="lock.js" defer></script>
 <script src="sync.js" defer></script>
@@ -529,7 +529,7 @@ main {
         <span class="fh-live"><span class="fh-live-dot"></span>live</span>
       </div>
       <div class="fh-header-right">
-        <span class="fh-updated" id="fhUpdated">loading…</span>
+        <span class="fh-updated" id="fhUpdated">indlæser…</span>
         <button class="fh-refresh" id="fhRefresh" aria-label="Refresh">⟳</button>
       </div>
     </div>
@@ -541,14 +541,14 @@ main {
       </svg>
       <div class="fh-ring-center">
         <div class="fh-ring-num" id="fhSteps">—</div>
-        <div class="fh-ring-unit">steps</div>
+        <div class="fh-ring-unit">skridt</div>
         <div class="fh-ring-label" id="fhStepsLabel">—</div>
       </div>
     </div>
 
     <div class="fh-stages" id="fhStages" style="display:none">
       <div class="fh-stages-head">
-        <span class="fh-stages-eyebrow">Sleep stages</span>
+        <span class="fh-stages-eyebrow">Søvnstadier</span>
         <span class="fh-stages-meta" id="fhStagesMeta"></span>
       </div>
       <div class="fh-stages-bar">
@@ -559,43 +559,43 @@ main {
       </div>
       <div class="fh-stages-legend">
         <div class="fh-stages-leg"><span class="fh-stages-dot d-rem"></span>REM <span class="fh-stages-num" id="fhStageRemTxt">—</span></div>
-        <div class="fh-stages-leg"><span class="fh-stages-dot d-deep"></span>Deep <span class="fh-stages-num" id="fhStageDeepTxt">—</span></div>
-        <div class="fh-stages-leg"><span class="fh-stages-dot d-light"></span>Light <span class="fh-stages-num" id="fhStageLightTxt">—</span></div>
-        <div class="fh-stages-leg"><span class="fh-stages-dot d-awake"></span>Awake <span class="fh-stages-num" id="fhStageAwakeTxt">—</span></div>
+        <div class="fh-stages-leg"><span class="fh-stages-dot d-deep"></span>Dyb <span class="fh-stages-num" id="fhStageDeepTxt">—</span></div>
+        <div class="fh-stages-leg"><span class="fh-stages-dot d-light"></span>Let <span class="fh-stages-num" id="fhStageLightTxt">—</span></div>
+        <div class="fh-stages-leg"><span class="fh-stages-dot d-awake"></span>Vågen <span class="fh-stages-num" id="fhStageAwakeTxt">—</span></div>
       </div>
     </div>
 
     <div class="fh-stats">
-      <div class="fh-stat"><div class="fh-stat-label">Active</div><div class="fh-stat-value" id="fhActive">—</div><div class="fh-stat-sub">min</div></div>
-      <div class="fh-stat"><div class="fh-stat-label">Calories</div><div class="fh-stat-value" id="fhCalories">—</div><div class="fh-stat-sub">kcal</div></div>
-      <div class="fh-stat"><div class="fh-stat-label">Avg HR</div><div class="fh-stat-value" id="fhAvgHr">—</div><div class="fh-stat-sub">bpm</div></div>
-      <div class="fh-stat"><div class="fh-stat-label">RHR</div><div class="fh-stat-value" id="fhRhr">—</div><div class="fh-stat-sub">bpm</div></div>
+      <div class="fh-stat"><div class="fh-stat-label">Aktiv</div><div class="fh-stat-value" id="fhActive">—</div><div class="fh-stat-sub">min</div></div>
+      <div class="fh-stat"><div class="fh-stat-label">Kalorier</div><div class="fh-stat-value" id="fhCalories">—</div><div class="fh-stat-sub">kcal</div></div>
+      <div class="fh-stat"><div class="fh-stat-label">Gns. puls</div><div class="fh-stat-value" id="fhAvgHr">—</div><div class="fh-stat-sub">bpm</div></div>
+      <div class="fh-stat"><div class="fh-stat-label">Hvilepuls</div><div class="fh-stat-value" id="fhRhr">—</div><div class="fh-stat-sub">bpm</div></div>
     </div>
 
     <div class="fh-bio" id="fhBio">
       <div class="fh-bio-item"><span class="fh-bio-label">HRV</span><span class="fh-bio-val" id="fhHrv">—</span></div>
-      <div class="fh-bio-item"><span class="fh-bio-label">Blood O₂</span><span class="fh-bio-val" id="fhSpo2">—</span></div>
-      <div class="fh-bio-item"><span class="fh-bio-label">Resp rate</span><span class="fh-bio-val" id="fhResp">—</span></div>
+      <div class="fh-bio-item"><span class="fh-bio-label">Blod-O₂</span><span class="fh-bio-val" id="fhSpo2">—</span></div>
+      <div class="fh-bio-item"><span class="fh-bio-label">Respiration</span><span class="fh-bio-val" id="fhResp">—</span></div>
     </div>
 
     <div class="fh-status" id="fhStatus"></div>
   </div>
 
-  <div class="section-title">Daily Stack</div>
+  <div class="section-title">Dagligt tilskud</div>
 
   <div class="stack-card">
     <div class="stack-ticker" id="stackTicker">
       <span class="stack-ticker-dot"></span>
-      <span class="stack-ticker-label">STACK</span>
+      <span class="stack-ticker-label">TILSKUD</span>
       <span class="stack-ticker-sep">·</span>
-      <span class="stack-ticker-msg" id="stackTickerMsg">All caught up — keep it rolling</span>
+      <span class="stack-ticker-msg" id="stackTickerMsg">Alt taget — bliv ved</span>
       <span class="stack-ticker-count" id="stackTickerCount">0/0</span>
     </div>
 
     <div class="stack-head">
-      <div class="sf-eyebrow">Daily stack</div>
-      <div class="sf-title">Tap each as you take it</div>
-      <div class="stack-progress-text" id="stackProgressText">— / — taken today · resets at 6 AM</div>
+      <div class="sf-eyebrow">Dagligt tilskud</div>
+      <div class="sf-title">Tryk på hver, når du tager den</div>
+      <div class="stack-progress-text" id="stackProgressText">— / — taget i dag · nulstilles kl. 6</div>
     </div>
 
     <div class="stack-progress-track">
@@ -605,25 +605,25 @@ main {
     <div id="stackGroups"></div>
 
     <div class="stack-add-wrap">
-      <div class="sf-eyebrow stack-add-label">Add to stack</div>
+      <div class="sf-eyebrow stack-add-label">Tilføj til tilskud</div>
       <div class="stack-add-row">
         <div class="stack-name-wrap">
-          <input id="stackAddName" type="text" placeholder="Name (e.g. B-complex)" class="stack-input" autocomplete="off" spellcheck="false" />
+          <input id="stackAddName" type="text" placeholder="Navn (fx B-complex)" class="stack-input" autocomplete="off" spellcheck="false" />
           <div id="stackSearchResults" class="stack-search-results" hidden></div>
         </div>
-        <input id="stackAddDose" type="text" placeholder="Dose (e.g. 1 cap)" class="stack-input" />
+        <input id="stackAddDose" type="text" placeholder="Dosis (fx 1 kapsel)" class="stack-input" />
         <select id="stackAddWindow" class="stack-input stack-select">
-          <option value="morning">Morning</option>
-          <option value="lunch">Lunch</option>
-          <option value="evening">Evening</option>
-          <option value="anytime">Anytime</option>
+          <option value="morning">Morgen</option>
+          <option value="lunch">Frokost</option>
+          <option value="evening">Aften</option>
+          <option value="anytime">Når som helst</option>
         </select>
-        <button id="stackAddBtn" class="stack-add-btn">+ Add</button>
+        <button id="stackAddBtn" class="stack-add-btn">+ Tilføj</button>
       </div>
     </div>
   </div>
 
-  <div class="attribution">// editable template · all data stays in your browser</div>
+  <div class="attribution">// redigerbar skabelon · alle data bliver i din browser</div>
 </main>
 
 <script>
@@ -656,10 +656,10 @@ main {
   ];
 
   const STACK_WINDOWS = [
-    { key: 'morning', icon: '🌅', title: 'Morning', time: '7–10 AM', cutoffHour: 10 },
-    { key: 'lunch',   icon: '🍽️', title: 'Lunch',   time: '12–2 PM', cutoffHour: 14 },
-    { key: 'evening', icon: '🌙', title: 'Evening', time: '9–11 PM', cutoffHour: 23 },
-    { key: 'anytime', icon: '⏱️', title: 'Anytime', time: 'No fixed window', cutoffHour: null },
+    { key: 'morning', icon: '🌅', title: 'Morgen', time: '7–10', cutoffHour: 10 },
+    { key: 'lunch',   icon: '🍽️', title: 'Frokost', time: '12–14', cutoffHour: 14 },
+    { key: 'evening', icon: '🌙', title: 'Aften', time: '21–23', cutoffHour: 23 },
+    { key: 'anytime', icon: '⏱️', title: 'Når som helst', time: 'Intet fast tidspunkt', cutoffHour: null },
   ];
 
   // ====== SUPPLEMENT DATABASE — researched defaults ======
@@ -808,7 +808,7 @@ main {
     const totalCount = items.length;
     const takenCount = items.filter(i => taken[i.id]).length;
     document.getElementById('stackProgressText').textContent =
-      `${takenCount} / ${totalCount} taken today · resets at 6 AM`;
+      `${takenCount} / ${totalCount} taget i dag · nulstilles kl. 6`;
     const pct = totalCount === 0 ? 0 : (takenCount / totalCount) * 100;
     document.getElementById('stackProgressBar').style.width = pct + '%';
 
@@ -842,8 +842,8 @@ main {
         row.className = 'stack-item' + (isTaken ? ' taken' : '') + (isMissed ? ' missed' : '');
 
         let tagHtml = '';
-        if (item.tag === 'stack') tagHtml = '<span class="stack-item-tag tag-stack">stack</span>';
-        else if (item.tag === 'not-ordered') tagHtml = '<span class="stack-item-tag tag-not-ordered">not ordered</span>';
+        if (item.tag === 'stack') tagHtml = '<span class="stack-item-tag tag-stack">tilskud</span>';
+        else if (item.tag === 'not-ordered') tagHtml = '<span class="stack-item-tag tag-not-ordered">ikke bestilt</span>';
 
         row.innerHTML = `
           <button class="stack-check ${isTaken ? 'checked' : ''}" data-action="toggle" data-id="${item.id}" aria-label="Mark taken">${isTaken ? '✓' : ''}</button>
@@ -863,7 +863,7 @@ main {
     });
 
     if (groupsEl.children.length === 0) {
-      groupsEl.innerHTML = `<div class="stack-window-empty">No items yet — add one below to start your stack.</div>`;
+      groupsEl.innerHTML = `<div class="stack-window-empty">Ingen ting endnu — tilføj en nedenfor for at starte.</div>`;
     }
 
     // Sync ticker after every render
@@ -892,13 +892,13 @@ main {
       if (isPastCutoff && !isTaken) {
         missed.push({
           type: 'missed',
-          text: `${item.name} — missed ${win.title.toLowerCase()} dose`
+          text: `${item.name} — sprang ${win.title.toLowerCase()}-dosis over`
         });
       }
       if (low.includes(item.id)) {
         lowList.push({
           type: 'low',
-          text: `${item.name} — running low, reorder soon`
+          text: `${item.name} — snart tom, bestil igen`
         });
       }
     });
@@ -916,7 +916,7 @@ main {
     cachedIssues = issues;
 
     if (issues.length === 0) {
-      msgEl.textContent = 'All caught up — keep it rolling';
+      msgEl.textContent = 'Alt taget — bliv ved';
       tickerEl.classList.remove('status-low', 'status-missed');
       countEl.textContent = `0/${totalItems}`;
       tickerIndex = 0;
@@ -1226,10 +1226,10 @@ document.addEventListener('DOMContentLoaded', function () {
     setRing(steps / STEP_GOAL);
     if (latestDay) {
       const isToday = latestDay === new Date().toISOString().slice(0, 10);
-      $('fhStepsLabel').textContent = (isToday ? 'today' : latestDay) +
-        ' · ' + Math.round((steps / STEP_GOAL) * 100) + '% of ' + STEP_GOAL.toLocaleString('da-DK');
+      $('fhStepsLabel').textContent = (isToday ? 'i dag' : latestDay) +
+        ' · ' + Math.round((steps / STEP_GOAL) * 100) + '% af ' + STEP_GOAL.toLocaleString('da-DK');
     } else {
-      $('fhStepsLabel').textContent = 'no activity logged yet';
+      $('fhStepsLabel').textContent = 'ingen aktivitet logget endnu';
     }
     $('fhActive').textContent = activeSec ? Math.round(activeSec / 60) : '—';
     $('fhCalories').textContent = cal ? Math.round(cal) : '—';
