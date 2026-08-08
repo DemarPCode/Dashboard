@@ -219,6 +219,12 @@ main {
 .sl-bar { transition: height 0.6s cubic-bezier(0.22,1,0.36,1), y 0.6s cubic-bezier(0.22,1,0.36,1); }
 .sl-bar-lbl { fill: var(--text-tertiary); font-size: 8px; font-family: var(--font-mono); }
 .sl-bar-val { fill: var(--text-secondary); font-size: 8.5px; font-weight: 700; font-family: var(--font-mono); }
+.sl-line-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.sl-line-grid { stroke: rgba(255,255,255,0.05); stroke-width: 0.6; }
+.sl-line-x { fill: var(--text-tertiary); font-size: 7px; font-family: var(--font-mono); }
+.sl-line-val { fill: var(--text-primary); font-size: 9px; font-weight: 700; font-family: var(--font-mono); }
+.sl-line-path { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.sl-score-est { font-size: 9px; color: var(--text-tertiary); font-weight: 500; letter-spacing: 0; text-transform: none; }
 
 .stack-card {
   background: var(--bg-card);
@@ -718,7 +724,7 @@ main {
           <div id="slChartHours"><div class="sl-chart-empty">Ingen data endnu</div></div>
         </div>
         <div class="sl-chart">
-          <div class="sl-chart-head"><span class="sl-chart-title">Søvnscore · 7 dage</span><span class="sl-chart-avg" id="slAvgScore"></span></div>
+          <div class="sl-chart-head"><span class="sl-chart-title">Søvnscore <span class="sl-score-est">· est.</span></span><span class="sl-chart-avg" id="slAvgScore"></span></div>
           <div id="slChartScore"><div class="sl-chart-empty">Ingen data endnu</div></div>
         </div>
         <div class="sl-chart">
@@ -736,6 +742,10 @@ main {
         <div class="sl-chart">
           <div class="sl-chart-head"><span class="sl-chart-title">Dyb søvn · 7 dage</span><span class="sl-chart-avg" id="slAvgDeep"></span></div>
           <div id="slChartDeep"><div class="sl-chart-empty">Ingen data endnu</div></div>
+        </div>
+        <div class="sl-chart">
+          <div class="sl-chart-head"><span class="sl-chart-title">Hvilepuls · 7 dage</span><span class="sl-chart-avg" id="slAvgPulse"></span></div>
+          <div id="slChartPulse"><div class="sl-chart-empty">Ingen data endnu</div></div>
         </div>
       </div>
     </div>
@@ -1492,7 +1502,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function slFmtDur(min) {
     if (min == null || isNaN(min)) return '—';
     const h = Math.floor(min / 60), m = Math.round(min % 60);
-    return h > 0 ? `${h}t ${m}m` : `${m}m`;
+    return h > 0 ? (m > 0 ? `${h}t ${m}m` : `${h}t`) : `${m}m`;
   }
   function slClock(d) { return d ? d.toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' }) : '—'; }
   function slWeekday(dateStr) {
@@ -1570,11 +1580,20 @@ document.addEventListener('DOMContentLoaded', function () {
     return { startMs, endMs, startOff: 0, endOff: 0, total, inBed, stageMin, segments, awakenings: [], restlessCount: 0, efficiency: eff, mainSleep: true };
   }
 
-  function slDeriveScore(total, eff) {
+  // Fitbit-style estimate (real sleep score isn't exposed by Google Health).
+  // Duration (max 50) + Composition/deep+rem (max 25) + Restoration (max 25).
+  function slDeriveScore(day) {
+    const total = day.total, sm = day.stageMin, eff = day.efficiency;
     if (total == null) return null;
-    const durPct = Math.min(100, (total / 480) * 100);       // 8h target
-    const e = eff != null ? Math.max(0, Math.min(100, eff)) : durPct;
-    return Math.round(0.65 * durPct + 0.35 * e);
+    const asleep = sm.deep + sm.light + sm.rem || total;
+    const dur = Math.min(1, asleep / 470) * 50;                       // ~7.8h = full
+    const comp = Math.min(1, ((sm.deep + sm.rem) / asleep) / 0.45) * 25; // ideal ~45% deep+rem
+    // restoration: efficiency, awake time and micro-awakenings all bite
+    const effF = eff != null ? Math.max(0, Math.min(1, eff / 100)) : 0.9;
+    const wakePen = Math.min(1, sm.awake / 35);                       // 35m awake = full penalty
+    const restPen = Math.min(1, (day.restlessCount || 0) / 24);      // 24 stirrings = full penalty
+    const rest = Math.max(0, effF - 0.6 * wakePen - 0.7 * restPen) * 25;
+    return Math.max(1, Math.min(100, Math.round(dur + comp + rest)));
   }
 
   function slRenderBars(containerId, items, opts) {
@@ -1598,6 +1617,76 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     svg += '</svg>';
     el.innerHTML = svg;
+  }
+
+  // Line chart (weekly trend, app-style): connected dots + soft area + weekday axis.
+  // items: [{label, value, display}]. opts: {color, min, max, floor0, dotColor(v)->color}
+  function slRenderLine(containerId, items, opts) {
+    const el = $(containerId);
+    if (!el) return;
+    const vals = items.map(i => (i.value == null || isNaN(i.value)) ? null : i.value);
+    const nums = vals.filter(v => v != null);
+    if (!nums.length) { el.innerHTML = '<div class="sl-chart-empty">Ingen data endnu</div>'; return; }
+    let max = opts.max != null ? opts.max : Math.max.apply(null, nums);
+    let min = opts.min != null ? opts.min : Math.min.apply(null, nums);
+    if (max === min) { max += 1; min -= 1; }
+    const pad = (max - min) * 0.18; max += pad; min -= pad;
+    if (opts.floor0 && min < 0) min = 0;
+    const W = 300, H = 118, left = 8, right = 8, top = 16, bottom = 20;
+    const plotW = W - left - right, plotH = H - top - bottom, n = items.length;
+    const X = i => left + (n === 1 ? plotW / 2 : (i / (n - 1)) * plotW);
+    const Y = v => top + plotH - ((v - min) / (max - min)) * plotH;
+    let svg = `<svg class="sl-line-svg" viewBox="0 0 ${W} ${H}" role="img">`;
+    // gridlines
+    [0, 0.5, 1].forEach(g => { const y = top + plotH * g; svg += `<line class="sl-line-grid" x1="${left}" y1="${y.toFixed(1)}" x2="${W - right}" y2="${y.toFixed(1)}"/>`; });
+    const pts = [];
+    let d = '';
+    vals.forEach((v, i) => { if (v == null) return; const x = X(i), y = Y(v); pts.push({ x, y, v, i }); d += (d ? ' L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1); });
+    if (pts.length > 1) {
+      const area = d + ` L${pts[pts.length - 1].x.toFixed(1)} ${(top + plotH).toFixed(1)} L${pts[0].x.toFixed(1)} ${(top + plotH).toFixed(1)} Z`;
+      svg += `<path d="${area}" fill="${opts.color}" opacity="0.10"/>`;
+    }
+    svg += `<path class="sl-line-path" d="${d}" stroke="${opts.color}"/>`;
+    pts.forEach((p, idx) => {
+      const last = idx === pts.length - 1;
+      const col = opts.dotColor ? opts.dotColor(p.v) : opts.color;
+      svg += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${last ? 3.4 : 2.3}" fill="${col}"${last ? ` stroke="${opts.color}" stroke-width="1.5"` : ''}/>`;
+    });
+    // latest value label
+    const lastP = pts[pts.length - 1], lastIt = items[lastP.i];
+    if (lastIt && lastIt.display != null && lastIt.display !== '') {
+      const anchor = lastP.x > W - 42 ? 'end' : 'middle';
+      const lx = anchor === 'end' ? lastP.x - 4 : lastP.x;
+      svg += `<text class="sl-line-val" x="${lx.toFixed(1)}" y="${Math.max(lastP.y - 6, 9).toFixed(1)}" text-anchor="${anchor}">${lastIt.display}</text>`;
+    }
+    // weekday axis
+    items.forEach((it, i) => { svg += `<text class="sl-line-x" x="${X(i).toFixed(1)}" y="${H - 5}" text-anchor="middle">${it.label}</text>`; });
+    svg += '</svg>';
+    el.innerHTML = svg;
+  }
+
+  // Resting-heart-rate 7-day series (defensive: shapes vary).
+  function slPulseDays(arr) {
+    if (!Array.isArray(arr)) return {};
+    const byDay = {};
+    arr.forEach(p => {
+      const iv = slFindInterval(p, 0);
+      let ms = iv ? iv.end : null;
+      if (ms == null) { const t = deepFindTime(p, 0); ms = t; }
+      const bpm = deepFind(p, /resting|beatsPerMinute|bpm/i, 0);
+      if (ms == null || bpm == null) return;
+      const key = slDayOff(+ms, 0);
+      byDay[key] = Math.round(bpm); // last write wins (latest per day)
+    });
+    return byDay;
+  }
+  function deepFindTime(obj, depth) {
+    if (obj == null || (depth || 0) > 6 || typeof obj !== 'object') return null;
+    for (const k of Object.keys(obj)) {
+      if (/time|date|end|start/i.test(k) && typeof obj[k] === 'string') { const t = Date.parse(obj[k]); if (!isNaN(t)) return t; }
+    }
+    for (const k of Object.keys(obj)) { const r = deepFindTime(obj[k], (depth || 0) + 1); if (r != null) return r; }
+    return null;
   }
 
   function slRenderHypnogram(sess) {
@@ -1666,7 +1755,7 @@ document.addEventListener('DOMContentLoaded', function () {
       let restlessCount = 0;
       list.forEach(s => { SL_ORDER.forEach(k => { stageMin[k] += s.stageMin[k]; }); restlessCount += s.restlessCount; });
       const eff = primary.efficiency;
-      const score = slDeriveScore(total, eff);
+      const score = slDeriveScore({ total, stageMin, efficiency: eff, restlessCount });
       return { date, primary, total, stageMin, restlessCount, efficiency: eff, score };
     });
 
@@ -1704,29 +1793,37 @@ document.addEventListener('DOMContentLoaded', function () {
     // ---- Hypnogram (last night) ----
     slRenderHypnogram(lp);
 
-    // ---- 7-day charts ----
+    // ---- 7-day charts (app-style line charts) ----
     const lbl = d => slWeekday(d.date);
-    const hrs = d => Math.round(d.total / 60 * 10) / 10;
-    slRenderBars('slChartHours',   days.map(d => ({ label: lbl(d), value: d.total / 60, display: hrs(d) })), { color: '#A78BFA' });
-    slRenderBars('slChartScore',   days.map(d => ({ label: lbl(d), value: d.score,      display: d.score != null ? d.score : '' })), { color: '#6BE3A4', max: 100 });
-    slRenderBars('slChartPrimary', days.map(d => ({ label: lbl(d), value: d.primary.total / 60, display: Math.round(d.primary.total / 60 * 10) / 10 })), { color: '#7DD3FC' });
-    slRenderBars('slChartEff',     days.map(d => ({ label: lbl(d), value: d.efficiency != null ? Math.round(d.efficiency) : 0, display: d.efficiency != null ? Math.round(d.efficiency) : '' })), { color: '#F2C063', max: 100 });
-    slRenderBars('slChartRem',     days.map(d => ({ label: lbl(d), value: d.stageMin.rem,  display: Math.round(d.stageMin.rem) })), { color: SL_COLOR.rem });
-    slRenderBars('slChartDeep',    days.map(d => ({ label: lbl(d), value: d.stageMin.deep, display: Math.round(d.stageMin.deep) })), { color: SL_COLOR.deep });
+    const scoreBand = v => v >= 90 ? '#6BE3A4' : v >= 80 ? '#5AB6C9' : v >= 60 ? '#F2C063' : '#FF6B6B';
+    slRenderLine('slChartHours',   days.map(d => ({ label: lbl(d), value: d.total,         display: slFmtDur(d.total) })),          { color: '#A78BFA' });
+    slRenderLine('slChartScore',   days.map(d => ({ label: lbl(d), value: d.score,         display: d.score })),                    { color: '#5AB6C9', min: 0, max: 100, dotColor: scoreBand });
+    slRenderLine('slChartPrimary', days.map(d => ({ label: lbl(d), value: d.primary.total, display: slFmtDur(d.primary.total) })),  { color: '#7DD3FC' });
+    slRenderLine('slChartEff',     days.map(d => ({ label: lbl(d), value: d.efficiency != null ? Math.round(d.efficiency) : null, display: d.efficiency != null ? Math.round(d.efficiency) + '%' : '' })), { color: '#F2C063', max: 100 });
+    slRenderLine('slChartRem',     days.map(d => ({ label: lbl(d), value: d.stageMin.rem,  display: slFmtDur(d.stageMin.rem) })),   { color: SL_COLOR.rem, floor0: true });
+    slRenderLine('slChartDeep',    days.map(d => ({ label: lbl(d), value: d.stageMin.deep, display: slFmtDur(d.stageMin.deep) })),  { color: SL_COLOR.deep, floor0: true });
+
+    // Pulse (resting heart rate) aligned to the same 7 wake-days
+    const pulseMap = slPulseDays(data['daily-resting-heart-rate']);
+    const pulseItems = days.map(d => ({ label: lbl(d), value: pulseMap[d.date] != null ? pulseMap[d.date] : null, display: pulseMap[d.date] != null ? pulseMap[d.date] : '' }));
+    slRenderLine('slChartPulse', pulseItems, { color: '#FF6B6B' });
 
     const avg = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
-    const avgHrs = avg(days.map(d => d.total / 60));
+    const avgHrs = avg(days.map(d => d.total));
     const avgScore = avg(days.filter(d => d.score != null).map(d => d.score));
-    const avgPrim = avg(days.map(d => d.primary.total / 60));
+    const avgPrim = avg(days.map(d => d.primary.total));
     const avgEff = avg(days.filter(d => d.efficiency != null).map(d => d.efficiency));
     const avgRem = avg(days.map(d => d.stageMin.rem));
     const avgDeep = avg(days.map(d => d.stageMin.deep));
-    if (avgHrs != null) $('slAvgHours').textContent = 'gns ' + (Math.round(avgHrs * 10) / 10) + 't';
+    const pulseVals = pulseItems.map(p => p.value).filter(v => v != null);
+    const avgPulse = avg(pulseVals);
+    if (avgHrs != null) $('slAvgHours').textContent = 'gns ' + slFmtDur(avgHrs);
     if (avgScore != null) $('slAvgScore').textContent = 'gns ' + Math.round(avgScore);
-    if (avgPrim != null) $('slAvgPrimary').textContent = 'gns ' + (Math.round(avgPrim * 10) / 10) + 't';
+    if (avgPrim != null) $('slAvgPrimary').textContent = 'gns ' + slFmtDur(avgPrim);
     if (avgEff != null) $('slAvgEff').textContent = 'gns ' + Math.round(avgEff) + '%';
-    if (avgRem != null) $('slAvgRem').textContent = 'gns ' + Math.round(avgRem) + 'm';
-    if (avgDeep != null) $('slAvgDeep').textContent = 'gns ' + Math.round(avgDeep) + 'm';
+    if (avgRem != null) $('slAvgRem').textContent = 'gns ' + slFmtDur(avgRem);
+    if (avgDeep != null) $('slAvgDeep').textContent = 'gns ' + slFmtDur(avgDeep);
+    if (avgPulse != null) $('slAvgPulse').textContent = 'gns ' + Math.round(avgPulse) + ' bpm';
 
     $('slUpdated').textContent = 'opdateret ' + new Date().toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
   }
