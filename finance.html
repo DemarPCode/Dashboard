@@ -2005,8 +2005,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .fin-hcard-m-v { font-size: 13.5px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .fin-hcard-actions { display: flex; gap: 8px; margin-top: 12px; }
 
-.fin-pies { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-@media (max-width: 640px) { .fin-pies { grid-template-columns: 1fr; } }
+.fin-pies { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+@media (max-width: 860px) { .fin-pies { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .fin-pies { grid-template-columns: 1fr; } }
 .fin-pie-card { background: rgba(255,255,255,0.02); border-radius: var(--radius-md); padding: 14px; }
 .fin-pie-title { font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 10px; text-align: center; }
 .fin-pie-svg { width: 116px; height: 116px; display: block; margin: 0 auto 12px; }
@@ -2104,6 +2105,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         <option value="boern">Børneopsparing</option>
         <option value="opsparing">Opsparing</option>
       </select>
+      <input class="fin-input fin-span2" id="phSector" type="text" placeholder="Sektor (valgfri — gættes automatisk for kendte aktier)" list="phSectorList" autocomplete="off" />
+      <datalist id="phSectorList"></datalist>
       <button class="fin-btn fin-btn-primary fin-span2" id="phAdd">+ Tilføj beholdning</button>
     </div>
     <div class="fin-note" id="phTip">💡 Ticker skal matche Yahoo Finance. Københavns-aktier ender på <b>.CO</b> (fx NOVO-B.CO, DSV.CO), tyske børs-ETF'er (Xetra) på <b>.DE</b> (fx VWCE.DE, EUNL.DE), amerikanske bruger symbolet direkte (fx AAPL). Valuta (DKK/EUR/USD) omregnes automatisk. Danske investeringsforeningsfonde uden ticker (Nordnet-fonde, Danske Invest, Maj Invest m.fl.) kan i stedet vælges i dropdown'en ovenfor — de opdateres også live. Hverken ticker eller fond? Sæt en manuel kurs.</div>
@@ -2111,7 +2114,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
   <div class="fin-card">
     <div class="fin-h">Hurtig-import (flere beholdninger på én gang)</div>
-    <div class="fin-note" style="margin-top:0">Én linje pr. beholdning: <b>Navn,Ticker,Antal,GAK,ManuelKurs,Depot,Kontotype,FundKey</b>. Kontotype: aktiedepot / ask / boern / opsparing. FundKey (valgfri, for danske fonde uden ticker): nordnet-teknologi-indeks / danske-invest-europa-indeks-bnp / danske-invest-teknologi-indeks / maj-invest-ai-semiconductor. Lad felter stå tomme, hvis de ikke er relevante.</div>
+    <div class="fin-note" style="margin-top:0">Én linje pr. beholdning: <b>Navn,Ticker,Antal,GAK,ManuelKurs,Depot,Kontotype,FundKey,Sektor</b>. Kontotype: aktiedepot / ask / boern / opsparing. FundKey (valgfri, for danske fonde uden ticker): nordnet-teknologi-indeks / danske-invest-europa-indeks-bnp / danske-invest-teknologi-indeks / maj-invest-ai-semiconductor. Sektor er valgfri — gættes automatisk for kendte aktier. Lad felter stå tomme, hvis de ikke er relevante.</div>
     <textarea id="phBulk" class="fin-input" style="width:100%;min-height:150px;font-family:var(--font-mono);font-size:11.5px;white-space:pre;resize:vertical" placeholder="Novo Nordisk A/S,NOVO-B.CO,20,372.17,,Nordnet Aktiedepot,aktiedepot"></textarea>
     <button class="fin-btn fin-btn-primary" id="phBulkAdd" style="margin-top:10px">+ Importér linjer</button>
     <div class="fin-note" id="phBulkResult" style="display:none;margin-top:10px"></div>
@@ -2156,6 +2159,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       <div class="fin-pie-card"><div class="fin-pie-title">Pr. aktie</div><div id="pieStock"></div></div>
       <div class="fin-pie-card"><div class="fin-pie-title">Pr. depot</div><div id="pieDepot"></div></div>
       <div class="fin-pie-card"><div class="fin-pie-title">Pr. kontotype</div><div id="pieType"></div></div>
+      <div class="fin-pie-card"><div class="fin-pie-title">Pr. sektor</div><div id="pieSector"></div></div>
     </div>
   </div>
 
@@ -3819,6 +3823,26 @@ document.addEventListener('DOMContentLoaded', function () {
     'maj-invest-ai-semiconductor': 'Maj Invest UCITS ETF AI & Semiconductor',
   };
 
+  // Manual sector tagging (h.sector) — free-form, but auto-suggested for
+  // well-known single-stock tickers. ETFs/funds default to a diversified
+  // bucket since they span many sectors (no free look-through data).
+  const SECTOR_LIST = ['Teknologi', 'Sundhed', 'Finans', 'Kommunikation', 'Cyklisk forbrug', 'Forbrugerprodukter', 'Industri', 'Energi', 'Forsyning', 'Materialer', 'Diversificeret/ETF'];
+  const SECTOR_GUESS = {
+    'NOVO-B.CO': 'Sundhed', 'AMD': 'Teknologi', 'NVDA': 'Teknologi', 'NBIS': 'Teknologi',
+    'IREN': 'Teknologi', 'MRVL': 'Teknologi', 'CBRS': 'Teknologi', 'RKLB': 'Industri',
+    'NFLX': 'Kommunikation', 'AAPL': 'Teknologi', 'MSFT': 'Teknologi', 'GOOGL': 'Kommunikation',
+    'GOOG': 'Kommunikation', 'AMZN': 'Cyklisk forbrug', 'TSLA': 'Cyklisk forbrug', 'META': 'Kommunikation',
+    'JPM': 'Finans', 'DSV.CO': 'Industri',
+  };
+  function guessSector(h) {
+    if (h.sector) return h.sector;
+    const t = (h.ticker || '').toUpperCase();
+    if (SECTOR_GUESS[t]) return SECTOR_GUESS[t];
+    if (h.fundKey) return 'Diversificeret/ETF';
+    if (/etf|indeks|fond/i.test(h.name || '')) return 'Diversificeret/ETF';
+    return null;
+  }
+
   let holdings = get(K_HOLD) || [];
   let quotes = get(K_Q) || {};        // { TICKER: {price, prevClose, currency, changePct, changeAbs, ts} }
   let fundQuotes = get(K_FQ) || {};   // { fundKey: {name, price, currency, error} }
@@ -3973,6 +3997,10 @@ document.addEventListener('DOMContentLoaded', function () {
     vals.forEach(x => { const t = x.h.type || 'aktiedepot'; const g = byType[t] = byType[t] || { value: 0, ret: 0, cost: 0, hasCost: false }; g.value += x.v.value; g.ret += (x.v.totalReturn || 0); if (x.v.cost != null) { g.cost += x.v.cost; g.hasCost = true; } });
     accts.forEach(a => { const t = a.type || 'opsparing'; const g = byType[t] = byType[t] || { value: 0, ret: 0, cost: 0, hasCost: false }; g.value += Number(a.balance) || 0; });
     donut('pieType', Object.keys(byType).map(t => { const g = byType[t]; return { label: TYPE_LABEL[t] || t, value: g.value, color: TYPE_COLOR[t] || '#999', ret: g.ret, retPct: g.hasCost && g.cost > 0 ? g.ret / g.cost * 100 : null }; }));
+    // sector pie — stocks only (accounts have no sector); manual/guessed tagging
+    const bySector = {};
+    vals.forEach(x => { const s = guessSector(x.h) || 'Ukendt'; const g = bySector[s] = bySector[s] || { value: 0, ret: 0, cost: 0, hasCost: false }; g.value += x.v.value; g.ret += (x.v.totalReturn || 0); if (x.v.cost != null) { g.cost += x.v.cost; g.hasCost = true; } });
+    donut('pieSector', Object.keys(bySector).map((s, i) => { const g = bySector[s]; return { label: s, value: g.value, color: PALETTE[i % PALETTE.length], ret: g.ret, retPct: g.hasCost && g.cost > 0 ? g.ret / g.cost * 100 : null }; }));
   }
 
   // ---- holdings list ----
@@ -4205,10 +4233,11 @@ document.addEventListener('DOMContentLoaded', function () {
       manualPrice: $('phManual').value.trim() || '',
       depot: $('phDepot').value.trim() || '',
       type: $('phType').value,
+      sector: $('phSector').value.trim() || '',
       divPct: '', divDate: ''
     });
     set(K_HOLD, holdings);
-    ['phName', 'phTicker', 'phShares', 'phGak', 'phManual', 'phDepot'].forEach(id => $(id).value = '');
+    ['phName', 'phTicker', 'phShares', 'phGak', 'phManual', 'phDepot', 'phSector'].forEach(id => $(id).value = '');
     $('phFundKey').value = '';
     renderAll();
     refresh();
@@ -4219,6 +4248,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const gak = prompt('GAK / købskurs (DKK):', h.gak);
     const manual = prompt('Manuel kurs (DKK, valgfri):', h.manualPrice);
     const depot = prompt('Depot:', h.depot);
+    const sector = prompt('Sektor (fx Teknologi, Sundhed, Diversificeret/ETF):', h.sector || guessSector(h) || '');
     const divReceived = prompt('Udbytte modtaget i alt (DKK, valgfri):', h.divReceived || '');
     const divPct = prompt('Udbytte % — til udbyttekalender (valgfri):', h.divPct);
     const divDate = prompt('Udbytte ex-dato (YYYY-MM-DD, valgfri):', h.divDate);
@@ -4226,6 +4256,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (gak !== null) h.gak = gak.trim();
     if (manual !== null) h.manualPrice = manual.trim();
     if (depot !== null) h.depot = depot.trim();
+    if (sector !== null) h.sector = sector.trim();
     if (divReceived !== null) h.divReceived = divReceived.trim();
     if (divPct !== null) h.divPct = divPct.trim();
     if (divDate !== null) h.divDate = divDate.trim();
@@ -4251,7 +4282,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const errors = [];
     lines.forEach((line, i) => {
       const parts = line.split(',').map(p => p.trim());
-      const [name, ticker, sharesRaw, gak, manual, depot, typeRaw, fundKeyRaw] = parts;
+      const [name, ticker, sharesRaw, gak, manual, depot, typeRaw, fundKeyRaw, sector] = parts;
       const shares = Number((sharesRaw || '').replace(',', '.'));
       const fundKey = FUND_NAMES[fundKeyRaw] ? fundKeyRaw : '';
       if (fundKeyRaw && !fundKey) { errors.push('Linje ' + (i + 1) + ': ukendt FundKey "' + fundKeyRaw + '"'); return; }
@@ -4262,7 +4293,7 @@ document.addEventListener('DOMContentLoaded', function () {
         id: uid(), name: name || (fundKey ? FUND_NAMES[fundKey] : ''), ticker: ticker || '', fundKey, shares,
         gak: (gak || '').replace(',', '.'),
         manualPrice: (manual || '').replace(',', '.'),
-        depot: depot || '', type, divPct: '', divDate: '',
+        depot: depot || '', type, sector: sector || '', divPct: '', divDate: '',
       });
       added++;
     });
@@ -4277,6 +4308,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ---- wire up ----
   function init() {
+    const sectorList = $('phSectorList'); if (sectorList) sectorList.innerHTML = SECTOR_LIST.map(s => `<option value="${s}"></option>`).join('');
     const add = $('phAdd'); if (add) add.addEventListener('click', addHolding);
     const bulkBtn = $('phBulkAdd'); if (bulkBtn) bulkBtn.addEventListener('click', bulkImport);
     const rf = $('finRefresh'); if (rf) rf.addEventListener('click', refresh);
