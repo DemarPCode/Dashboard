@@ -5,10 +5,17 @@
 //   POST -> { messages:[{role,content}], context:"..." } -> { text }
 //
 // Providers (first one whose key is set wins):
-//   GEMINI_API_KEY    -> Google Gemini 2.5 Flash + Google Search  (FREE tier)
-//   ANTHROPIC_API_KEY -> Claude + web search                      (paid)
+//   GROQ_API_KEY      -> Groq (gpt-oss-120b) + built-in browser_search
+//                        Genuinely free tier, no card, no EU paid-service
+//                        requirement (unlike Google's Gemini API terms).
+//   GEMINI_API_KEY    -> Google Gemini + Google Search
+//                        NOTE: Google's terms require the PAID tier for
+//                        apps serving EEA/UK/Switzerland users — the free
+//                        tier will fail with quota errors there.
+//   ANTHROPIC_API_KEY -> Claude + web search (paid, no EU restriction)
 //
 // With no key set it returns a friendly setup notice and spends nothing.
+// The user provides their own key in Vercel — no key is embedded here.
 // =============================================================
 
 const SYSTEM = `Du er en personlig økonomi-assistent for en dansk bruger, integreret i deres private dashboard.
@@ -22,9 +29,27 @@ function buildSystem(context) {
   return SYSTEM + (context ? `\n\n=== Brugerens aktuelle økonomi ===\n${context}` : '');
 }
 
-// Overridable via GEMINI_MODEL env var so a future Google deprecation
-// doesn't need a code change — just update the env var and redeploy.
+// All model names are overridable via env vars so a future provider-side
+// deprecation doesn't need a code change — just update the env var.
+const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
+
+async function callGroq(key, messages, system) {
+  const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + key, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: [{ role: 'system', content: system }, ...messages],
+      tools: [{ type: 'browser_search' }],
+      max_tokens: 1024,
+    }),
+  });
+  const j = await r.json().catch(() => null);
+  if (!r.ok || !j) return { text: 'Kunne ikke nå Groq: ' + ((j && j.error && j.error.message) || ('HTTP ' + r.status)) };
+  const text = j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+  return { text: text || '(intet svar)' };
+}
 
 async function callGemini(key, messages, system) {
   const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(GEMINI_MODEL) + ':generateContent?key=' + encodeURIComponent(key);
@@ -59,9 +84,10 @@ async function callClaude(key, messages, system) {
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
+  const GROQ = process.env.GROQ_API_KEY;
   const GEMINI = process.env.GEMINI_API_KEY;
   const ANTHROPIC = process.env.ANTHROPIC_API_KEY;
-  const provider = GEMINI ? 'gemini' : (ANTHROPIC ? 'anthropic' : null);
+  const provider = GROQ ? 'groq' : (GEMINI ? 'gemini' : (ANTHROPIC ? 'anthropic' : null));
 
   if (req.method === 'GET') return res.status(200).json({ configured: !!provider, provider });
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
@@ -69,7 +95,7 @@ export default async function handler(req, res) {
   if (!provider) {
     return res.status(200).json({
       configured: false,
-      text: 'AI-assistenten er ikke aktiveret endnu. Tilføj en GRATIS Google Gemini-nøgle (GEMINI_API_KEY) — eller en betalt Anthropic-nøgle (ANTHROPIC_API_KEY) — i Vercel for at slå den til.',
+      text: 'AI-assistenten er ikke aktiveret endnu. Tilføj en GRATIS Groq-nøgle (GROQ_API_KEY) i Vercel for at slå den til — ingen betaling krævet, heller ikke i EU.',
     });
   }
 
@@ -84,7 +110,9 @@ export default async function handler(req, res) {
 
   const system = buildSystem(context);
   try {
-    const out = provider === 'gemini' ? await callGemini(GEMINI, messages, system) : await callClaude(ANTHROPIC, messages, system);
+    const out = provider === 'groq' ? await callGroq(GROQ, messages, system)
+      : provider === 'gemini' ? await callGemini(GEMINI, messages, system)
+      : await callClaude(ANTHROPIC, messages, system);
     return res.status(200).json(Object.assign({ provider }, out));
   } catch (e) {
     return res.status(200).json({ text: 'Fejl: ' + String(e) });
