@@ -1972,6 +1972,28 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .fin-hold-del:hover { color: var(--danger); border-color: rgba(255,107,107,0.4); }
 .fin-empty { color: var(--text-quaternary); font-style: italic; font-size: 13px; padding: 14px 4px; }
 
+/* Toolbar: unit (%/kr) + sort (Værdi/Afkast) pill toggles */
+.fin-toolbar { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.fin-pillgroup { display: inline-flex; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 999px; padding: 2px; gap: 2px; }
+.fin-pill { border: none; background: transparent; color: var(--text-tertiary); font-family: inherit; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer; transition: background 0.15s, color 0.15s; }
+.fin-pill:hover { color: var(--text-secondary); }
+.fin-pill.active { background: rgba(255,255,255,0.10); color: var(--text-primary); }
+
+/* Expandable holding cards (Portefølje) */
+.fin-hcard { border-bottom: 1px solid rgba(255,255,255,0.05); }
+.fin-hcard:last-child { border-bottom: 0; }
+.fin-hcard-head { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 12px 4px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.fin-hcard-chevron { color: var(--text-quaternary); font-size: 13px; transition: transform 0.2s cubic-bezier(0.22,1,0.36,1); flex-shrink: 0; }
+.fin-hcard.open .fin-hcard-chevron { transform: rotate(90deg); }
+.fin-hcard-detail { display: none; padding: 2px 4px 16px; }
+.fin-hcard.open .fin-hcard-detail { display: block; }
+.fin-hcard-mgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+@media (max-width: 560px) { .fin-hcard-mgrid { grid-template-columns: repeat(2, 1fr); } }
+.fin-hcard-metric { background: rgba(255,255,255,0.025); border-radius: 10px; padding: 10px 8px; text-align: center; }
+.fin-hcard-m-l { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 5px; }
+.fin-hcard-m-v { font-size: 13.5px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.fin-hcard-actions { display: flex; gap: 8px; margin-top: 12px; }
+
 .fin-pies { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 @media (max-width: 640px) { .fin-pies { grid-template-columns: 1fr; } }
 .fin-pie-card { background: rgba(255,255,255,0.02); border-radius: var(--radius-md); padding: 14px; }
@@ -2086,11 +2108,31 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
   <div class="fin-card">
     <div class="fin-h">Beholdninger</div>
+    <div class="fin-toolbar">
+      <div class="fin-pillgroup" data-role="unit">
+        <button class="fin-pill" data-unit="pct">%</button>
+        <button class="fin-pill" data-unit="kr">kr</button>
+      </div>
+      <div class="fin-pillgroup" data-role="sort">
+        <button class="fin-pill" data-sort="value">Værdi</button>
+        <button class="fin-pill" data-sort="return">Afkast</button>
+      </div>
+    </div>
     <div id="phList"><div class="fin-empty">Ingen beholdninger endnu.</div></div>
   </div>
 
   <div class="fin-card">
     <div class="fin-h">Fordeling</div>
+    <div class="fin-toolbar">
+      <div class="fin-pillgroup" data-role="unit">
+        <button class="fin-pill" data-unit="pct">%</button>
+        <button class="fin-pill" data-unit="kr">kr</button>
+      </div>
+      <div class="fin-pillgroup" data-role="sort">
+        <button class="fin-pill" data-sort="value">Værdi</button>
+        <button class="fin-pill" data-sort="return">Afkast</button>
+      </div>
+    </div>
     <div class="fin-pies">
       <div class="fin-pie-card"><div class="fin-pie-title">Pr. aktie</div><div id="pieStock"></div></div>
       <div class="fin-pie-card"><div class="fin-pie-title">Pr. depot</div><div id="pieDepot"></div></div>
@@ -3764,6 +3806,22 @@ document.addEventListener('DOMContentLoaded', function () {
   let fx = get(K_FX) || { rates: { DKK: 1 }, ts: 0 };
   let calMonth = new Date(); calMonth.setDate(1);
 
+  // Display toggle: unit = '%' vs 'kr' for afkast/fordeling; sort = 'value' vs 'return'.
+  const K_UI = 'fin:port_ui';
+  let uiState = Object.assign({ unit: 'pct', sort: 'value' }, get(K_UI) || {});
+  let expandedHoldings = new Set();
+  function setUnit(u) { uiState.unit = u; set(K_UI, uiState); renderAll(); }
+  function setSort(s) { uiState.sort = s; set(K_UI, uiState); renderAll(); }
+  function syncToolbars() {
+    document.querySelectorAll('[data-unit]').forEach(b => b.classList.toggle('active', b.getAttribute('data-unit') === uiState.unit));
+    document.querySelectorAll('[data-sort]').forEach(b => b.classList.toggle('active', b.getAttribute('data-sort') === uiState.sort));
+  }
+  function fmtSignedDKK(n) {
+    if (n == null || isNaN(n)) return '—';
+    const v = Math.round(n);
+    return (v >= 0 ? '+' : '−') + Math.abs(v).toLocaleString('da-DK') + ' kr';
+  }
+
   function toDKK(amt, cur) {
     if (amt == null || isNaN(amt)) return 0;
     if (!cur || cur === 'DKK') return amt;
@@ -3812,7 +3870,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const dayPct = (q && q.changePct != null && !q.error) ? q.changePct : null;
     const retAbs = cost != null ? value - cost : null;
     const retPct = (cost != null && cost > 0) ? (value - cost) / cost * 100 : null;
-    return { shares, pDKK, value, cost, dayDKK, dayPct, retAbs, retPct, q };
+    const divReceived = Number(h.divReceived) || 0;
+    const totalReturn = retAbs != null ? retAbs + divReceived : (divReceived || null);
+    const totalReturnPct = (cost != null && cost > 0 && totalReturn != null) ? totalReturn / cost * 100 : null;
+    return { shares, pDKK, value, cost, dayDKK, dayPct, retAbs, retPct, divReceived, totalReturn, totalReturnPct, q };
   }
   function cashTotal() {
     const accts = get(K_ACCT) || [];
@@ -3821,14 +3882,23 @@ document.addEventListener('DOMContentLoaded', function () {
   function portfolioTotal() { return holdings.reduce((s, h) => s + valuate(h).value, 0); }
 
   // ---- donut ----
+  // rows: [{label, value, color, ret (dkk return, optional), retPct (optional)}]
+  // Wedge size always reflects `value` (true allocation). Legend ORDER and the
+  // NUMBER shown per row follow uiState.sort/unit so users can re-read the
+  // same pie as "what's biggest" or "what performed best".
   function donut(containerId, rows) {
     const el = $(containerId); if (!el) return;
     const total = rows.reduce((s, r) => s + r.value, 0);
     if (total <= 0) { el.innerHTML = '<div class="fin-empty" style="text-align:center">Ingen data</div>'; return; }
+    const sorted = rows.slice().sort((a, b) => {
+      const ka = uiState.sort === 'return' ? (a.ret == null ? -Infinity : a.ret) : a.value;
+      const kb = uiState.sort === 'return' ? (b.ret == null ? -Infinity : b.ret) : b.value;
+      return kb - ka;
+    });
     const C = 58, R = 42, SW = 16, circ = 2 * Math.PI * R;
     let off = 0;
     let ring = '';
-    rows.forEach(r => {
+    sorted.forEach(r => {
       const frac = r.value / total;
       const len = frac * circ;
       ring += `<circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="${r.color}" stroke-width="${SW}" stroke-dasharray="${len.toFixed(2)} ${(circ - len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 ${C} ${C})"/>`;
@@ -3836,43 +3906,74 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     const svg = `<svg class="fin-pie-svg" viewBox="0 0 ${2 * C} ${2 * C}" role="img">${ring}<circle cx="${C}" cy="${C}" r="${R - SW / 2 - 1}" fill="var(--bg)"/></svg>`;
     let legend = '<div class="fin-legend">';
-    rows.forEach(r => {
-      legend += `<div class="fin-legend-row"><span class="fin-legend-dot" style="background:${r.color}"></span><span class="fin-legend-name">${r.label}</span><span class="fin-legend-pct">${Math.round(r.value / total * 100)}%</span></div>`;
+    sorted.forEach(r => {
+      let num, cls = '';
+      if (uiState.sort === 'return') {
+        if (r.retPct == null) { num = '—'; }
+        else { num = uiState.unit === 'kr' ? fmtSignedDKK(r.ret) : fmtPct(r.retPct, true); cls = r.ret >= 0 ? 'fin-pos' : 'fin-neg'; }
+      } else {
+        num = uiState.unit === 'kr' ? fmtDKK(r.value).replace('DKK ', '') + ' kr' : Math.round(r.value / total * 100) + '%';
+      }
+      legend += `<div class="fin-legend-row"><span class="fin-legend-dot" style="background:${r.color}"></span><span class="fin-legend-name">${r.label}</span><span class="fin-legend-pct ${cls}">${num}</span></div>`;
     });
     legend += '</div>';
     el.innerHTML = svg + legend;
   }
 
   function renderPies() {
-    const vals = holdings.map(h => ({ h, v: valuate(h).value })).filter(x => x.v > 0);
-    donut('pieStock', vals.map((x, i) => ({ label: x.h.name || x.h.ticker || '—', value: x.v, color: PALETTE[i % PALETTE.length] })));
-    // depot + kontotype pies include cash accounts too
+    const vals = holdings.map(h => ({ h, v: valuate(h) })).filter(x => x.v.value > 0);
+    donut('pieStock', vals.map((x, i) => ({ label: x.h.name || x.h.ticker || '—', value: x.v.value, color: PALETTE[i % PALETTE.length], ret: x.v.totalReturn, retPct: x.v.totalReturnPct })));
+    // depot + kontotype pies include cash accounts too (accounts have no return figure)
     const accts = (get(K_ACCT) || []).filter(a => (Number(a.balance) || 0) > 0);
-    const byDepot = {}; vals.forEach(x => { const d = x.h.depot || 'Ukendt'; byDepot[d] = (byDepot[d] || 0) + x.v; });
-    accts.forEach(a => { const d = a.institution || a.name || 'Bank'; byDepot[d] = (byDepot[d] || 0) + (Number(a.balance) || 0); });
-    donut('pieDepot', Object.keys(byDepot).map((d, i) => ({ label: d, value: byDepot[d], color: PALETTE[i % PALETTE.length] })));
-    const byType = {}; vals.forEach(x => { const t = x.h.type || 'aktiedepot'; byType[t] = (byType[t] || 0) + x.v; });
-    accts.forEach(a => { const t = a.type || 'opsparing'; byType[t] = (byType[t] || 0) + (Number(a.balance) || 0); });
-    donut('pieType', Object.keys(byType).map(t => ({ label: TYPE_LABEL[t] || t, value: byType[t], color: TYPE_COLOR[t] || '#999' })));
+    const byDepot = {};
+    vals.forEach(x => { const d = x.h.depot || 'Ukendt'; const g = byDepot[d] = byDepot[d] || { value: 0, ret: 0, cost: 0, hasCost: false }; g.value += x.v.value; g.ret += (x.v.totalReturn || 0); if (x.v.cost != null) { g.cost += x.v.cost; g.hasCost = true; } });
+    accts.forEach(a => { const d = a.institution || a.name || 'Bank'; const g = byDepot[d] = byDepot[d] || { value: 0, ret: 0, cost: 0, hasCost: false }; g.value += Number(a.balance) || 0; });
+    donut('pieDepot', Object.keys(byDepot).map((d, i) => { const g = byDepot[d]; return { label: d, value: g.value, color: PALETTE[i % PALETTE.length], ret: g.ret, retPct: g.hasCost && g.cost > 0 ? g.ret / g.cost * 100 : null }; }));
+    const byType = {};
+    vals.forEach(x => { const t = x.h.type || 'aktiedepot'; const g = byType[t] = byType[t] || { value: 0, ret: 0, cost: 0, hasCost: false }; g.value += x.v.value; g.ret += (x.v.totalReturn || 0); if (x.v.cost != null) { g.cost += x.v.cost; g.hasCost = true; } });
+    accts.forEach(a => { const t = a.type || 'opsparing'; const g = byType[t] = byType[t] || { value: 0, ret: 0, cost: 0, hasCost: false }; g.value += Number(a.balance) || 0; });
+    donut('pieType', Object.keys(byType).map(t => { const g = byType[t]; return { label: TYPE_LABEL[t] || t, value: g.value, color: TYPE_COLOR[t] || '#999', ret: g.ret, retPct: g.hasCost && g.cost > 0 ? g.ret / g.cost * 100 : null }; }));
   }
 
   // ---- holdings list ----
-  function renderHoldings() {
-    const el = $('phList');
-    if (!holdings.length) { el.innerHTML = '<div class="fin-empty">Ingen beholdninger endnu.</div>'; return; }
-    const rows = holdings.map(h => {
-      const v = valuate(h);
-      const q = v.q;
-      const fq = h.fundKey ? fundQuotes[h.fundKey] : null;
-      const priceInfo = (fq && fq.price != null && !fq.error)
-        ? `${(Math.round(v.pDKK * 100) / 100).toLocaleString('da-DK')} kr · ${escapeHtml(FUND_NAMES[h.fundKey] || 'fond')} (live)`
-        : (fq && fq.error) ? '<span style="color:var(--warning)">fondskurs fejlede</span>'
-        : (q && !q.error) ? `${(Math.round(v.pDKK * 100) / 100).toLocaleString('da-DK')} kr`
-        : (h.fundKey ? 'henter fondskurs…' : (h.ticker ? '<span style="color:var(--warning)">ingen kurs</span>' : 'manuel'));
-      const dayCls = v.dayPct == null ? '' : (v.dayPct >= 0 ? 'fin-pos' : 'fin-neg');
-      const retCls = v.retPct == null ? '' : (v.retPct >= 0 ? 'fin-pos' : 'fin-neg');
-      const chip = `<span class="fin-chip" style="background:${(TYPE_COLOR[h.type] || '#888')}22;color:${TYPE_COLOR[h.type] || '#aaa'}">${TYPE_LABEL[h.type] || h.type || ''}</span>`;
-      return `<div class="fin-hold" data-id="${h.id}">
+  function metricTile(label, value) {
+    return `<div class="fin-hcard-metric"><div class="fin-hcard-m-l">${label}</div><div class="fin-hcard-m-v">${value}</div></div>`;
+  }
+  function holdingCardHTML(h, v) {
+    const q = v.q;
+    const fq = h.fundKey ? fundQuotes[h.fundKey] : null;
+    const priceInfo = (fq && fq.price != null && !fq.error)
+      ? `${(Math.round(v.pDKK * 100) / 100).toLocaleString('da-DK')} kr · ${escapeHtml(FUND_NAMES[h.fundKey] || 'fond')} (live)`
+      : (fq && fq.error) ? '<span style="color:var(--warning)">fondskurs fejlede</span>'
+      : (q && !q.error) ? `${(Math.round(v.pDKK * 100) / 100).toLocaleString('da-DK')} kr`
+      : (h.fundKey ? 'henter fondskurs…' : (h.ticker ? '<span style="color:var(--warning)">ingen kurs</span>' : 'manuel'));
+    const chip = `<span class="fin-chip" style="background:${(TYPE_COLOR[h.type] || '#888')}22;color:${TYPE_COLOR[h.type] || '#aaa'}">${TYPE_LABEL[h.type] || h.type || ''}</span>`;
+
+    const mainRet = uiState.unit === 'kr' ? v.totalReturn : v.totalReturnPct;
+    const mainRetCls = mainRet == null ? '' : (mainRet >= 0 ? 'fin-pos' : 'fin-neg');
+    const mainRetTxt = mainRet == null ? '' : (uiState.unit === 'kr' ? fmtSignedDKK(v.totalReturn) : fmtPct(v.totalReturnPct, true)) + ' afkast';
+    const dayCls = v.dayPct == null ? '' : (v.dayPct >= 0 ? 'fin-pos' : 'fin-neg');
+
+    const open = expandedHoldings.has(h.id);
+    const kursRetCls = v.retPct == null ? '' : (v.retPct >= 0 ? 'fin-pos' : 'fin-neg');
+    const totRetCls = v.totalReturnPct == null ? '' : (v.totalReturnPct >= 0 ? 'fin-pos' : 'fin-neg');
+    const detail = `<div class="fin-hcard-mgrid">
+        ${metricTile('GAK', h.gak !== '' && h.gak != null ? Number(h.gak).toLocaleString('da-DK') + ' kr' : '—')}
+        ${metricTile('Antal', (Number(h.shares) || 0).toLocaleString('da-DK') + ' stk')}
+        ${metricTile('Nuværende pris', v.pDKK ? (Math.round(v.pDKK * 100) / 100).toLocaleString('da-DK') + ' kr' : '—')}
+        ${metricTile('Værdi', fmtDKK(v.value).replace('DKK ', '') + ' kr')}
+        ${metricTile('Kursafkast', `<span class="${kursRetCls}">${v.retAbs != null ? fmtSignedDKK(v.retAbs) : '—'}</span>`)}
+        ${metricTile('Kursafkast %', `<span class="${kursRetCls}">${v.retPct != null ? fmtPct(v.retPct, true) : '—'}</span>`)}
+        ${metricTile('Udbytte modtaget', v.divReceived ? '+' + Math.round(v.divReceived).toLocaleString('da-DK') + ' kr' : '—')}
+        ${metricTile('Afkast i alt', `<span class="${totRetCls}">${v.totalReturn != null ? fmtSignedDKK(v.totalReturn) + (v.totalReturnPct != null ? ' · ' + fmtPct(v.totalReturnPct, true) : '') : '—'}</span>`)}
+      </div>
+      <div class="fin-hcard-actions">
+        <button class="fin-btn" data-edit="${h.id}">✎ Redigér</button>
+        <button class="fin-btn" data-del="${h.id}" style="color:var(--danger)">✕ Slet</button>
+      </div>`;
+
+    return `<div class="fin-hcard${open ? ' open' : ''}" data-id="${h.id}">
+      <div class="fin-hcard-head" data-toggle="${h.id}">
         <div>
           <div class="fin-hold-name">${escapeHtml(h.name || h.ticker || '—')}</div>
           <div class="fin-hold-meta">${chip}${h.depot ? '<span>' + escapeHtml(h.depot) + '</span>' : ''}<span>${(Number(h.shares) || 0).toLocaleString('da-DK')} stk · ${priceInfo}</span></div>
@@ -3880,15 +3981,24 @@ document.addEventListener('DOMContentLoaded', function () {
         <div class="fin-hold-val">
           <div class="fin-hold-v1">${fmtDKK(v.value)}</div>
           <div class="fin-hold-v2 ${dayCls}">${v.dayPct != null ? fmtPct(v.dayPct, true) + ' i dag' : ''}</div>
-          <div class="fin-hold-v2 ${retCls}">${v.retPct != null ? fmtPct(v.retPct, true) + ' afkast' : ''}</div>
+          <div class="fin-hold-v2 ${mainRetCls}">${mainRetTxt}</div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:4px">
-          <button class="fin-hold-del" data-edit="${h.id}" title="Redigér">✎</button>
-          <button class="fin-hold-del" data-del="${h.id}" title="Slet">✕</button>
-        </div>
-      </div>`;
-    }).join('');
-    el.innerHTML = rows;
+        <span class="fin-hcard-chevron">›</span>
+      </div>
+      <div class="fin-hcard-detail">${detail}</div>
+    </div>`;
+  }
+  function renderHoldings() {
+    const el = $('phList');
+    if (!holdings.length) { el.innerHTML = '<div class="fin-empty">Ingen beholdninger endnu.</div>'; return; }
+    const withV = holdings.map(h => ({ h, v: valuate(h) }));
+    withV.sort((a, b) => {
+      const ka = uiState.sort === 'value' ? a.v.value : (uiState.unit === 'kr' ? a.v.totalReturn : a.v.totalReturnPct);
+      const kb = uiState.sort === 'value' ? b.v.value : (uiState.unit === 'kr' ? b.v.totalReturn : b.v.totalReturnPct);
+      return (kb == null ? -Infinity : kb) - (ka == null ? -Infinity : ka);
+    });
+    el.innerHTML = withV.map(({ h, v }) => holdingCardHTML(h, v)).join('');
+    syncToolbars();
   }
 
   function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
@@ -4049,12 +4159,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const gak = prompt('GAK / købskurs (DKK):', h.gak);
     const manual = prompt('Manuel kurs (DKK, valgfri):', h.manualPrice);
     const depot = prompt('Depot:', h.depot);
-    const divPct = prompt('Udbytte % (valgfri):', h.divPct);
+    const divReceived = prompt('Udbytte modtaget i alt (DKK, valgfri):', h.divReceived || '');
+    const divPct = prompt('Udbytte % — til udbyttekalender (valgfri):', h.divPct);
     const divDate = prompt('Udbytte ex-dato (YYYY-MM-DD, valgfri):', h.divDate);
     h.shares = Number(shares) || 0;
     if (gak !== null) h.gak = gak.trim();
     if (manual !== null) h.manualPrice = manual.trim();
     if (depot !== null) h.depot = depot.trim();
+    if (divReceived !== null) h.divReceived = divReceived.trim();
     if (divPct !== null) h.divPct = divPct.trim();
     if (divDate !== null) h.divDate = divDate.trim();
     set(K_HOLD, holdings);
@@ -4111,8 +4223,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const list = $('phList');
     if (list) list.addEventListener('click', (e) => {
       const del = e.target.closest('[data-del]'); const ed = e.target.closest('[data-edit]');
+      const toggle = e.target.closest('[data-toggle]');
       if (del) delHolding(del.getAttribute('data-del'));
       else if (ed) editHolding(ed.getAttribute('data-edit'));
+      else if (toggle) {
+        const id = toggle.getAttribute('data-toggle');
+        if (expandedHoldings.has(id)) expandedHoldings.delete(id); else expandedHoldings.add(id);
+        renderHoldings();
+      }
+    });
+    document.addEventListener('click', (e) => {
+      const ub = e.target.closest('[data-unit]'); if (ub) { setUnit(ub.getAttribute('data-unit')); return; }
+      const sb = e.target.closest('[data-sort]'); if (sb) { setSort(sb.getAttribute('data-sort')); return; }
     });
     const prev = $('finCalPrev'), next = $('finCalNext');
     if (prev) prev.addEventListener('click', () => { calMonth.setMonth(calMonth.getMonth() - 1); renderCalendar(); });
