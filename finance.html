@@ -1733,6 +1733,62 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       </div>
     </div>
   </div>
+
+  <!-- ===== SKAT (foldbar boks nederst på forsiden) ===== -->
+  <div class="fin-card fin-tax-card">
+    <button class="fin-tax-head" id="taxToggle" aria-expanded="false" type="button">
+      <div>
+        <div class="fin-h" style="margin-bottom:6px">🧾 Skat i år</div>
+        <div class="fin-hero-val" style="font-size:26px" id="taxTotal">DKK 0</div>
+        <div class="fin-hero-sub" id="taxSub">Tryk for at indtaste dine tal</div>
+      </div>
+      <span class="fin-tax-chevron">⌄</span>
+    </button>
+
+    <div class="fin-tax-detail" id="taxDetail" hidden>
+      <div class="fin-cal-stats" id="taxStats"></div>
+
+      <div class="fin-subsection">
+        <div class="fin-h">Aktiedepot — registrér salg</div>
+        <div class="fin-form">
+          <input class="fin-input fin-span2" id="txName" placeholder="Værdipapir (fx Novo Nordisk B)" autocomplete="off" />
+          <input class="fin-input" id="txQty" type="number" inputmode="decimal" placeholder="Antal" />
+          <input class="fin-input" id="txSellDate" type="date" title="Salgsdato" />
+          <input class="fin-input" id="txBuy" type="number" inputmode="decimal" placeholder="Købskurs pr. stk (DKK)" />
+          <input class="fin-input" id="txSell" type="number" inputmode="decimal" placeholder="Salgskurs pr. stk (DKK)" />
+          <button class="fin-btn fin-btn-primary fin-span2" id="txAdd">+ Tilføj salg</button>
+        </div>
+        <div class="fin-note">Gevinster og tab modregnes automatisk i hinanden — sælger du fx DSV med 10.000 kr i gevinst og Novo med 5.000 kr i tab samme år, beskattes kun de resterende 5.000 kr.</div>
+        <div id="txList" style="margin-top:10px"><div class="fin-empty">Ingen salg registreret endnu.</div></div>
+      </div>
+
+      <div class="fin-subsection">
+        <div class="fin-h">Aktiesparekonto — lagerbeskatning</div>
+        <div class="fin-form">
+          <input class="fin-input" id="askStart" type="number" inputmode="decimal" placeholder="Værdi 1. januar (DKK)" />
+          <input class="fin-input" id="askDeposits" type="number" inputmode="decimal" placeholder="Nettoindskud i år (indskud − hævninger)" />
+        </div>
+        <div class="fin-note">På aktiesparekontoen betaler du <b>17% af hele værdistigningen hvert år</b> — uanset om du sælger eller ej, og uanset hvilke aktier du bytter rundt på undervejs. Det er kun den <b>samlede kontoværdi</b> der tæller, så dine ASK-salg bruges <b>ikke</b> i denne beregning.</div>
+        <div class="fin-cal-stats" id="askStats" style="margin-top:10px"></div>
+      </div>
+
+      <div class="fin-subsection">
+        <div class="fin-h">Indstillinger</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <label style="font-size:12px;color:var(--text-secondary)">Progressionsgrænse (DKK)</label>
+          <input class="fin-input" id="txThreshold" type="number" style="max-width:140px" />
+          <label style="font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:6px"><input type="checkbox" id="txCouple" /> Gift (dobbelt grænse)</label>
+        </div>
+        <div class="fin-note">
+          <b>Vejledende — ikke bindende skatterådgivning.</b><br>
+          • <b>Aktiedepot:</b> nettogevinst er aktieindkomst — 27% op til progressionsgrænsen (2026: ~67.500 kr, dobbelt for gifte), 42% derover. Tab og gevinster modregnes automatisk.<br>
+          • <b>Aktiesparekonto:</b> 17% lagerbeskatning af årets samlede værdistigning (uafhængig af salg).<br>
+          • <b>Børneopsparing:</b> skattefri.<br>
+          • OBS: aktier bruger reelt gennemsnitsmetoden. Tallene her er et overslag.
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ===== ACTIVE SUBSCRIPTIONS ===== -->
@@ -1942,6 +1998,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .fin-note { font-size: 11.5px; color: var(--text-tertiary); line-height: 1.5; background: rgba(255,255,255,0.02); border-radius: var(--radius-md); padding: 12px 14px; margin-top: 10px; }
 .fin-note b { color: var(--text-secondary); }
 
+/* Skat: collapsible box on the front page (Formue) */
+.fin-tax-card { padding: 0; overflow: hidden; margin-top: 4px; }
+.fin-tax-head { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; background: transparent; border: none; padding: 18px 16px; cursor: pointer; text-align: left; font-family: inherit; color: inherit; -webkit-tap-highlight-color: transparent; }
+.fin-tax-head:hover { background: rgba(255,255,255,0.02); }
+.fin-tax-chevron { font-size: 16px; color: var(--text-tertiary); transition: transform 0.25s cubic-bezier(0.22,1,0.36,1); flex-shrink: 0; }
+.fin-tax-head[aria-expanded="true"] .fin-tax-chevron { transform: rotate(180deg); }
+.fin-tax-detail { padding: 0 16px 18px; }
+.fin-tax-detail[hidden] { display: none; }
+.fin-subsection { padding-top: 16px; margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); }
+.fin-subsection:first-child { padding-top: 0; margin-top: 0; border-top: none; }
+
 /* AI advisor */
 .fin-chat { display: flex; flex-direction: column; gap: 10px; min-height: 240px; }
 .fin-msg { max-width: 88%; padding: 11px 14px; border-radius: 14px; font-size: 13.5px; line-height: 1.5; white-space: pre-wrap; }
@@ -2087,60 +2154,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   </div>
 </div>
 
-<!-- ===== SKAT ===== -->
-<div class="section" data-section="tax" hidden>
-  <div class="section-title"><span class="section-title-text">SKAT</span></div>
-
-  <div class="fin-hero">
-    <div class="fin-hero-label">Estimeret skat i år</div>
-    <div class="fin-hero-val" id="taxTotal">DKK 0</div>
-    <div class="fin-hero-sub" id="taxSub">Registrér dine salg for at estimere skatten</div>
-  </div>
-
-  <div class="fin-cal-stats" id="taxStats" style="margin-bottom:14px"></div>
-
-  <div class="fin-card">
-    <div class="fin-h">Registrér salg</div>
-    <div class="fin-form">
-      <input class="fin-input fin-span2" id="txName" placeholder="Værdipapir (fx Novo Nordisk B)" autocomplete="off" />
-      <select class="fin-select" id="txType">
-        <option value="aktiedepot">Aktiedepot (aktieindkomst)</option>
-        <option value="ask">Aktiesparekonto (17% lager)</option>
-        <option value="boern">Børneopsparing (skattefri)</option>
-      </select>
-      <input class="fin-input" id="txQty" type="number" inputmode="decimal" placeholder="Antal" />
-      <input class="fin-input" id="txBuy" type="number" inputmode="decimal" placeholder="Købskurs pr. stk (DKK)" />
-      <input class="fin-input" id="txSell" type="number" inputmode="decimal" placeholder="Salgskurs pr. stk (DKK)" />
-      <input class="fin-input" id="txBuyDate" type="date" title="Købsdato" />
-      <input class="fin-input" id="txSellDate" type="date" title="Salgsdato" />
-      <button class="fin-btn fin-btn-primary fin-span2" id="txAdd">+ Tilføj salg</button>
-    </div>
-  </div>
-
-  <div class="fin-card">
-    <div class="fin-h">Dine salg</div>
-    <div id="txList"><div class="fin-empty">Ingen salg registreret endnu.</div></div>
-  </div>
-
-  <div class="fin-card">
-    <div class="fin-h">Indstillinger</div>
-    <div class="fin-form">
-      <div class="fin-span2" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <label style="font-size:12px;color:var(--text-secondary)">Progressionsgrænse (DKK)</label>
-        <input class="fin-input" id="txThreshold" type="number" style="max-width:140px" />
-        <label style="font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:6px"><input type="checkbox" id="txCouple" /> Gift (dobbelt grænse)</label>
-      </div>
-    </div>
-    <div class="fin-note">
-      <b>Sådan regnes der (vejledende — ikke bindende skatterådgivning):</b><br>
-      • <b>Aktiedepot:</b> gevinst er aktieindkomst — <b>27%</b> op til progressionsgrænsen (2026: ~67.500 kr, dobbelt for gifte) og <b>42%</b> derover. Tab modregnes i gevinster.<br>
-      • <b>Aktiesparekonto:</b> <b>17%</b> lagerbeskatning (her estimeret på realiseret gevinst).<br>
-      • <b>Børneopsparing:</b> skattefri.<br>
-      • OBS: aktier bruger reelt <b>gennemsnitsmetoden</b> (ikke FIFO), og ASK beskattes af hele årets gevinst inkl. urealiseret. Tallene her er et overslag.
-    </div>
-  </div>
-</div>
-
 <!-- ===== AI ===== -->
 <div class="section" data-section="ai" hidden>
   <div class="section-title"><span class="section-title-text">AI-ØKONOMIASSISTENT</span></div>
@@ -2186,10 +2199,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   <button class="bot-tab" data-tab="accounts">
     <span class="bot-tab-icon">🏦</span>
     <span class="bot-tab-label">Konti</span>
-  </button>
-  <button class="bot-tab" data-tab="tax">
-    <span class="bot-tab-icon">🧾</span>
-    <span class="bot-tab-label">Skat</span>
   </button>
   <button class="bot-tab" data-tab="ai">
     <span class="bot-tab-icon">🤖</span>
@@ -2248,7 +2257,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
   tabs.forEach(b => b.addEventListener('click', () => setActiveTab(b.dataset.tab)));
   const savedTab = storeGet(TAB_KEY);
-  setActiveTab(savedTab && ['net','port','accounts','tax','ai','subs'].includes(savedTab) ? savedTab : 'net');
+  setActiveTab(savedTab && ['net','port','accounts','ai','subs'].includes(savedTab) ? savedTab : 'net');
 
   // ============================================================
   // NET WORTH (copied from the main dashboard, verbatim logic)
@@ -4178,7 +4187,14 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <script>
-/* ===== Skat: Danish investment-tax estimate ===== */
+/* ===== Skat: Danish investment-tax estimate =====
+   Aktiedepot: realized gains/losses NET against each other automatically
+   (summing signed gains already does this — a 5.000 kr loss lowers the
+   taxed total by 5.000 kr, exactly like the real rule).
+   Aktiesparekonto: real Danish rule is LAGERBESKATNING — 17% of the
+   account's total value increase for the year, regardless of whether
+   anything was sold. So it is computed from (nuværende værdi − værdi
+   1/1 − nettoindskud), NOT from the sales log. */
 (function () {
   'use strict';
   const $ = (id) => document.getElementById(id);
@@ -4189,6 +4205,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const fmtDKK = (n) => 'DKK ' + Math.round(n || 0).toLocaleString('da-DK');
   const kr = (n) => (n >= 0 ? '+' : '−') + Math.abs(Math.round(n)).toLocaleString('da-DK') + ' kr';
   const K_SALES = 'fin:sales', K_TH = 'fin:tax_threshold', K_CP = 'fin:tax_couple';
+  const K_ASK_START = 'fin:ask_start_value', K_ASK_DEP = 'fin:ask_net_deposits';
   const TYPE_LABEL = { aktiedepot: 'Aktiedepot', ask: 'Aktiesparekonto', boern: 'Børneopsparing' };
   const DEFAULT_THRESHOLD = 67500;
 
@@ -4196,50 +4213,87 @@ document.addEventListener('DOMContentLoaded', function () {
     let t = Number(get(K_TH)); if (!t || isNaN(t)) t = DEFAULT_THRESHOLD;
     return get(K_CP) ? t * 2 : t;
   }
+
+  // Current live value of ASK-type holdings (mirrors the Portefølje module's
+  // valuation, duplicated here since that module's helpers are private).
+  function toDKK(amt, cur, fx) { if (amt == null) return 0; if (!cur || cur === 'DKK') return amt; const r = fx && fx.rates && fx.rates[cur]; return r ? amt / r : amt; }
+  function currentASKValue() {
+    const holds = get('fin:holdings') || [];
+    const quotes = get('fin:quotes') || {};
+    const fx = get('fin:fx') || { rates: { DKK: 1 } };
+    return holds.filter(h => h.type === 'ask').reduce((sum, h) => {
+      const q = h.ticker ? quotes[h.ticker.toUpperCase()] : null;
+      const p = (q && q.price != null && !q.error) ? toDKK(q.price, q.currency, fx) : Number(h.manualPrice || h.gak || 0);
+      return sum + (Number(h.shares) || 0) * p;
+    }, 0);
+  }
+
   function compute() {
     const sales = get(K_SALES) || [];
-    let akt = 0, ask = 0, boern = 0;
-    sales.forEach(s => {
-      const g = ((Number(s.sell) || 0) - (Number(s.buy) || 0)) * (Number(s.qty) || 0);
-      if (s.type === 'ask') ask += g; else if (s.type === 'boern') boern += g; else akt += g;
-    });
+    // Only aktiedepot sales are tax-relevant here (realized, netted).
+    const akt = sales.filter(s => s.type !== 'ask' && s.type !== 'boern')
+      .reduce((sum, s) => sum + ((Number(s.sell) || 0) - (Number(s.buy) || 0)) * (Number(s.qty) || 0), 0);
     const th = threshold();
     let aktTax = 0;
     if (akt > 0) aktTax = Math.min(akt, th) * 0.27 + Math.max(0, akt - th) * 0.42;
-    const askTax = Math.max(0, ask) * 0.17;
-    return { sales, akt, ask, boern, aktTax, askTax, totalTax: aktTax + askTax, realized: akt + ask + boern, th };
+
+    // ASK: lagerbeskatning — value change minus net deposits, not sales.
+    const askStart = Number(get(K_ASK_START)) || 0;
+    const askDeposits = Number(get(K_ASK_DEP)) || 0;
+    const askNow = currentASKValue();
+    const askGain = askNow - askStart - askDeposits;
+    const askTax = Math.max(0, askGain) * 0.17;
+
+    return { sales, akt, aktTax, askNow, askStart, askDeposits, askGain, askTax, totalTax: aktTax + askTax };
   }
+
   function render() {
     const c = compute();
     $('taxTotal').textContent = fmtDKK(c.totalTax);
-    $('taxSub').innerHTML = c.sales.length
-      ? `Realiseret gevinst <span class="${c.realized >= 0 ? 'fin-pos' : 'fin-neg'}">${kr(c.realized)}</span> · effektiv sats ${c.realized > 0 ? Math.round(c.totalTax / c.realized * 100) : 0}%`
-      : 'Registrér dine salg for at estimere skatten';
+    $('taxSub').textContent = c.totalTax > 0 || c.sales.length || c.askStart
+      ? 'Tryk for detaljer og indtastning'
+      : 'Tryk for at indtaste dine tal';
     $('taxStats').innerHTML =
-      `<div class="fin-stat"><div class="fin-stat-l">Aktiedepot gevinst</div><div class="fin-stat-v ${c.akt >= 0 ? 'fin-pos' : 'fin-neg'}">${kr(c.akt)}</div></div>` +
+      `<div class="fin-stat"><div class="fin-stat-l">Aktiedepot gevinst (netto)</div><div class="fin-stat-v ${c.akt >= 0 ? 'fin-pos' : 'fin-neg'}">${kr(c.akt)}</div></div>` +
       `<div class="fin-stat"><div class="fin-stat-l">Skat aktiedepot</div><div class="fin-stat-v">${Math.round(c.aktTax).toLocaleString('da-DK')}</div></div>` +
-      `<div class="fin-stat"><div class="fin-stat-l">ASK gevinst</div><div class="fin-stat-v ${c.ask >= 0 ? 'fin-pos' : 'fin-neg'}">${kr(c.ask)}</div></div>` +
+      `<div class="fin-stat"><div class="fin-stat-l">ASK værdistigning</div><div class="fin-stat-v ${c.askGain >= 0 ? 'fin-pos' : 'fin-neg'}">${kr(c.askGain)}</div></div>` +
       `<div class="fin-stat"><div class="fin-stat-l">Skat ASK (17%)</div><div class="fin-stat-v">${Math.round(c.askTax).toLocaleString('da-DK')}</div></div>`;
+
     const listEl = $('txList');
     listEl.innerHTML = c.sales.length ? c.sales.slice().reverse().map(s => {
       const g = ((Number(s.sell) || 0) - (Number(s.buy) || 0)) * (Number(s.qty) || 0);
-      return `<div class="fin-hold" data-id="${s.id}"><div><div class="fin-hold-name">${esc(s.name || 'Salg')}</div><div class="fin-hold-meta"><span class="fin-chip" style="background:#ffffff10;color:var(--text-secondary)">${TYPE_LABEL[s.type] || s.type}</span><span>${(Number(s.qty) || 0)} stk · ${s.buy}→${s.sell}${s.sellDate ? ' · ' + s.sellDate : ''}</span></div></div><div class="fin-hold-val"><div class="fin-hold-v1 ${g >= 0 ? 'fin-pos' : 'fin-neg'}">${kr(g)}</div></div><div><button class="fin-hold-del" data-txdel="${s.id}">✕</button></div></div>`;
+      return `<div class="fin-hold" data-id="${s.id}"><div><div class="fin-hold-name">${esc(s.name || 'Salg')}</div><div class="fin-hold-meta"><span class="fin-chip" style="background:#ffffff10;color:var(--text-secondary)">${TYPE_LABEL[s.type] || 'Aktiedepot'}</span><span>${(Number(s.qty) || 0)} stk · ${s.buy}→${s.sell}${s.sellDate ? ' · ' + s.sellDate : ''}</span></div></div><div class="fin-hold-val"><div class="fin-hold-v1 ${g >= 0 ? 'fin-pos' : 'fin-neg'}">${kr(g)}</div></div><div><button class="fin-hold-del" data-txdel="${s.id}">✕</button></div></div>`;
     }).join('') : '<div class="fin-empty">Ingen salg registreret endnu.</div>';
-    const thEl = $('txThreshold'); if (thEl && !thEl.value) thEl.value = Number(get(K_TH)) || DEFAULT_THRESHOLD;
+
+    const thEl = $('txThreshold'); if (thEl && document.activeElement !== thEl) thEl.value = Number(get(K_TH)) || DEFAULT_THRESHOLD;
     const cp = $('txCouple'); if (cp) cp.checked = !!get(K_CP);
+    const asEl = $('askStart'); if (asEl && document.activeElement !== asEl) asEl.value = get(K_ASK_START) || '';
+    const adEl = $('askDeposits'); if (adEl && document.activeElement !== adEl) adEl.value = get(K_ASK_DEP) || '';
   }
+
   function addSale() {
     const qty = Number($('txQty').value); if (!qty) { $('txQty').focus(); return; }
     const sales = get(K_SALES) || [];
-    sales.push({ id: uid(), name: $('txName').value.trim(), type: $('txType').value, qty, buy: Number($('txBuy').value) || 0, sell: Number($('txSell').value) || 0, buyDate: $('txBuyDate').value || '', sellDate: $('txSellDate').value || '' });
+    sales.push({ id: uid(), name: $('txName').value.trim(), type: 'aktiedepot', qty, buy: Number($('txBuy').value) || 0, sell: Number($('txSell').value) || 0, sellDate: $('txSellDate').value || '' });
     set(K_SALES, sales);
     ['txName', 'txQty', 'txBuy', 'txSell'].forEach(id => $(id).value = '');
     render();
   }
+
   function init() {
+    const toggle = $('taxToggle'), detail = $('taxDetail');
+    if (toggle && detail) {
+      toggle.addEventListener('click', () => {
+        const open = detail.hasAttribute('hidden');
+        if (open) { detail.removeAttribute('hidden'); toggle.setAttribute('aria-expanded', 'true'); }
+        else { detail.setAttribute('hidden', ''); toggle.setAttribute('aria-expanded', 'false'); }
+      });
+    }
     const b = $('txAdd'); if (b) b.addEventListener('click', addSale);
     const th = $('txThreshold'); if (th) th.addEventListener('change', () => { set(K_TH, Number(th.value) || DEFAULT_THRESHOLD); render(); });
     const cp = $('txCouple'); if (cp) cp.addEventListener('change', () => { set(K_CP, cp.checked); render(); });
+    const asEl = $('askStart'); if (asEl) asEl.addEventListener('change', () => { set(K_ASK_START, Number(asEl.value) || 0); render(); });
+    const adEl = $('askDeposits'); if (adEl) adEl.addEventListener('change', () => { set(K_ASK_DEP, Number(adEl.value) || 0); render(); });
     document.addEventListener('click', (e) => {
       const d = e.target.closest('[data-txdel]'); if (!d) return;
       let s = get(K_SALES) || []; s = s.filter(x => x.id !== d.getAttribute('data-txdel')); set(K_SALES, s); render();
