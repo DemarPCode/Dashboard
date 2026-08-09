@@ -22,8 +22,12 @@ function buildSystem(context) {
   return SYSTEM + (context ? `\n\n=== Brugerens aktuelle økonomi ===\n${context}` : '');
 }
 
+// Overridable via GEMINI_MODEL env var so a future Google deprecation
+// doesn't need a code change — just update the env var and redeploy.
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
+
 async function callGemini(key, messages, system) {
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=' + encodeURIComponent(key);
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(GEMINI_MODEL) + ':generateContent?key=' + encodeURIComponent(key);
   const body = {
     systemInstruction: { parts: [{ text: system }] },
     contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
