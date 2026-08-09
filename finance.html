@@ -2070,6 +2070,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   </div>
 
   <div class="fin-card">
+    <div class="fin-h">Hurtig-import (flere beholdninger på én gang)</div>
+    <div class="fin-note" style="margin-top:0">Én linje pr. beholdning: <b>Navn,Ticker,Antal,GAK,ManuelKurs,Depot,Kontotype</b>. Kontotype: aktiedepot / ask / boern / opsparing. Lad Ticker eller ManuelKurs stå tomt, hvis det ikke er relevant.</div>
+    <textarea id="phBulk" class="fin-input" style="width:100%;min-height:150px;font-family:var(--font-mono);font-size:11.5px;white-space:pre;resize:vertical" placeholder="Novo Nordisk A/S,NOVO-B.CO,20,372.17,,Nordnet Aktiedepot,aktiedepot"></textarea>
+    <button class="fin-btn fin-btn-primary" id="phBulkAdd" style="margin-top:10px">+ Importér linjer</button>
+    <div class="fin-note" id="phBulkResult" style="display:none;margin-top:10px"></div>
+  </div>
+
+  <div class="fin-card">
     <div class="fin-h">Beholdninger</div>
     <div id="phList"><div class="fin-empty">Ingen beholdninger endnu.</div></div>
   </div>
@@ -4026,9 +4034,45 @@ document.addEventListener('DOMContentLoaded', function () {
     renderAll();
   }
 
+  const TYPE_ALIAS = {
+    aktiedepot: 'aktiedepot', depot: 'aktiedepot',
+    ask: 'ask', aktiesparekonto: 'ask',
+    boern: 'boern', 'børneopsparing': 'boern', born: 'boern',
+    opsparing: 'opsparing', bank: 'opsparing', konto: 'opsparing',
+  };
+  function bulkImport() {
+    const raw = $('phBulk').value;
+    const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+    let added = 0;
+    const errors = [];
+    lines.forEach((line, i) => {
+      const parts = line.split(',').map(p => p.trim());
+      const [name, ticker, sharesRaw, gak, manual, depot, typeRaw] = parts;
+      const shares = Number((sharesRaw || '').replace(',', '.'));
+      if (!name && !ticker) { errors.push('Linje ' + (i + 1) + ': mangler navn/ticker'); return; }
+      if (!shares || isNaN(shares)) { errors.push('Linje ' + (i + 1) + ': ugyldigt antal'); return; }
+      const type = TYPE_ALIAS[(typeRaw || '').toLowerCase()] || 'aktiedepot';
+      holdings.push({
+        id: uid(), name: name || '', ticker: ticker || '', shares,
+        gak: (gak || '').replace(',', '.'),
+        manualPrice: (manual || '').replace(',', '.'),
+        depot: depot || '', type, divPct: '', divDate: '',
+      });
+      added++;
+    });
+    set(K_HOLD, holdings);
+    $('phBulk').value = '';
+    const resEl = $('phBulkResult');
+    resEl.style.display = '';
+    resEl.innerHTML = 'Tilføjede <b>' + added + '</b> beholdning' + (added === 1 ? '' : 'er') + '.' + (errors.length ? '<br>⚠️ ' + errors.join('<br>⚠️ ') : '');
+    renderAll();
+    if (added) refresh();
+  }
+
   // ---- wire up ----
   function init() {
     const add = $('phAdd'); if (add) add.addEventListener('click', addHolding);
+    const bulkBtn = $('phBulkAdd'); if (bulkBtn) bulkBtn.addEventListener('click', bulkImport);
     const rf = $('finRefresh'); if (rf) rf.addEventListener('click', refresh);
     const list = $('phList');
     if (list) list.addEventListener('click', (e) => {
