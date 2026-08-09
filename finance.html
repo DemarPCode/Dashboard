@@ -2144,7 +2144,30 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 <!-- ===== AI ===== -->
 <div class="section" data-section="ai" hidden>
   <div class="section-title"><span class="section-title-text">AI-ØKONOMIASSISTENT</span></div>
-  <div class="fin-card"><div class="fin-empty">AI-assistenten bygges her.</div></div>
+
+  <div class="fin-card" id="aiSetup" hidden>
+    <div class="fin-h">Ikke aktiveret</div>
+    <div class="fin-note" style="margin-top:0">
+      AI-assistenten kan <b>søge på nettet</b> og give råd ud fra din portefølje. Den er slået fra indtil du tilføjer en <b>Anthropic API-nøgle</b>.<br><br>
+      <b>Sådan slår du den til:</b><br>
+      1. Opret en nøgle på <b>console.anthropic.com</b><br>
+      2. I Vercel → dit projekt → Settings → Environment Variables: tilføj <b>ANTHROPIC_API_KEY</b><br>
+      3. Redeploy — så er assistenten aktiv.<br><br>
+      ⚠️ Hver besked koster et lille beløb (API-forbrug). Indtil du selv gør det, bruges der <b>ingen penge</b>.
+    </div>
+  </div>
+
+  <div class="fin-card" id="aiChatCard">
+    <div class="fin-h">Spørg din assistent</div>
+    <div class="fin-chat" id="aiChat">
+      <div class="fin-msg bot">Hej! Jeg er din økonomi-assistent. Spørg mig om din portefølje, opsparing, gebyrer, skat eller hvad der helst kan styrke din privatøkonomi — jeg kan også slå aktuelle tal op på nettet. 🤖</div>
+    </div>
+    <div class="fin-chat-input">
+      <input class="fin-input" id="aiInput" placeholder="Skriv et spørgsmål…" autocomplete="off" />
+      <button class="fin-btn fin-btn-primary" id="aiSend">Send</button>
+    </div>
+    <div class="fin-note">Assistenten kender din portefølje, konti og net worth. Den er vejledende — ikke bindende finansiel rådgivning.</div>
+  </div>
 </div>
 
 </div>
@@ -4233,6 +4256,87 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
+})();
+</script>
+
+<script>
+/* ===== AI-økonomiassistent (gated: costs nothing without an API key) ===== */
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const get = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const TYPE_LABEL = { aktiedepot: 'Aktiedepot', ask: 'Aktiesparekonto', boern: 'Børneopsparing', opsparing: 'Opsparing' };
+
+  const chat = $('aiChat'), input = $('aiInput'), send = $('aiSend');
+  if (!chat) return;
+  const messages = [];
+
+  function toDKK(amt, cur, fx) { if (amt == null) return 0; if (!cur || cur === 'DKK') return amt; const r = fx && fx.rates && fx.rates[cur]; return r ? amt / r : amt; }
+  function buildContext() {
+    const holds = get('fin:holdings') || [];
+    const quotes = get('fin:quotes') || {};
+    const fx = get('fin:fx') || { rates: { DKK: 1 } };
+    const accts = get('fin:accounts') || [];
+    const income = get('fin:income') || [];
+    let portVal = 0;
+    const lines = holds.map(h => {
+      const q = h.ticker ? quotes[h.ticker.toUpperCase()] : null;
+      const p = (q && q.price != null && !q.error) ? toDKK(q.price, q.currency, fx) : Number(h.manualPrice || h.gak || 0);
+      const val = (Number(h.shares) || 0) * p; portVal += val;
+      return `- ${h.name || h.ticker} (${h.ticker || 'ingen ticker'}): ${Number(h.shares) || 0} stk, ${TYPE_LABEL[h.type] || h.type}, depot ${h.depot || '—'}, ~${Math.round(val).toLocaleString('da-DK')} kr`;
+    });
+    const cash = accts.reduce((s, a) => s + (Number(a.balance) || 0), 0);
+    const acctLines = accts.map(a => `- ${a.name} (${TYPE_LABEL[a.type] || a.type}): ${Math.round(Number(a.balance) || 0).toLocaleString('da-DK')} kr`);
+    const m = new Date().toISOString().slice(0, 7);
+    const monthIncome = income.filter(i => String(i.date).slice(0, 7) === m).reduce((s, i) => s + (Number(i.amount) || 0), 0);
+    return [
+      `Net worth: ~${Math.round(portVal + cash).toLocaleString('da-DK')} kr (portefølje ${Math.round(portVal).toLocaleString('da-DK')} + kontant ${Math.round(cash).toLocaleString('da-DK')}).`,
+      holds.length ? `Beholdninger:\n${lines.join('\n')}` : 'Ingen aktier registreret.',
+      accts.length ? `Konti:\n${acctLines.join('\n')}` : '',
+      monthIncome ? `Indkomst denne måned: ~${Math.round(monthIncome).toLocaleString('da-DK')} kr.` : '',
+    ].filter(Boolean).join('\n');
+  }
+
+  function bubble(role, text) {
+    const d = document.createElement('div');
+    d.className = 'fin-msg ' + (role === 'user' ? 'user' : 'bot');
+    d.textContent = text;
+    chat.appendChild(d); chat.scrollTop = chat.scrollHeight;
+    return d;
+  }
+
+  async function sendMsg() {
+    const text = input.value.trim(); if (!text) return;
+    input.value = '';
+    messages.push({ role: 'user', content: text });
+    bubble('user', text);
+    const thinking = bubble('bot', '…');
+    send.disabled = true;
+    try {
+      const r = await fetch('/api/advisor', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ messages, context: buildContext() }),
+      });
+      const j = await r.json();
+      const reply = (j && j.text) || 'Intet svar.';
+      thinking.textContent = reply;
+      messages.push({ role: 'assistant', content: reply });
+      if (j && j.configured === false) $('aiSetup').removeAttribute('hidden');
+    } catch (e) {
+      thinking.textContent = 'Kunne ikke nå assistenten.';
+    } finally {
+      send.disabled = false;
+    }
+  }
+
+  send.addEventListener('click', sendMsg);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMsg(); });
+
+  // status check (no cost)
+  fetch('/api/advisor').then(r => r.json()).then(j => {
+    if (j && j.configured === false) $('aiSetup').removeAttribute('hidden');
+  }).catch(() => {});
 })();
 </script>
 </body>
