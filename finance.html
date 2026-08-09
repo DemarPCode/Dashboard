@@ -2090,7 +2090,55 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 <!-- ===== SKAT ===== -->
 <div class="section" data-section="tax" hidden>
   <div class="section-title"><span class="section-title-text">SKAT</span></div>
-  <div class="fin-card"><div class="fin-empty">Skatteoptimering bygges her.</div></div>
+
+  <div class="fin-hero">
+    <div class="fin-hero-label">Estimeret skat i år</div>
+    <div class="fin-hero-val" id="taxTotal">DKK 0</div>
+    <div class="fin-hero-sub" id="taxSub">Registrér dine salg for at estimere skatten</div>
+  </div>
+
+  <div class="fin-cal-stats" id="taxStats" style="margin-bottom:14px"></div>
+
+  <div class="fin-card">
+    <div class="fin-h">Registrér salg</div>
+    <div class="fin-form">
+      <input class="fin-input fin-span2" id="txName" placeholder="Værdipapir (fx Novo Nordisk B)" autocomplete="off" />
+      <select class="fin-select" id="txType">
+        <option value="aktiedepot">Aktiedepot (aktieindkomst)</option>
+        <option value="ask">Aktiesparekonto (17% lager)</option>
+        <option value="boern">Børneopsparing (skattefri)</option>
+      </select>
+      <input class="fin-input" id="txQty" type="number" inputmode="decimal" placeholder="Antal" />
+      <input class="fin-input" id="txBuy" type="number" inputmode="decimal" placeholder="Købskurs pr. stk (DKK)" />
+      <input class="fin-input" id="txSell" type="number" inputmode="decimal" placeholder="Salgskurs pr. stk (DKK)" />
+      <input class="fin-input" id="txBuyDate" type="date" title="Købsdato" />
+      <input class="fin-input" id="txSellDate" type="date" title="Salgsdato" />
+      <button class="fin-btn fin-btn-primary fin-span2" id="txAdd">+ Tilføj salg</button>
+    </div>
+  </div>
+
+  <div class="fin-card">
+    <div class="fin-h">Dine salg</div>
+    <div id="txList"><div class="fin-empty">Ingen salg registreret endnu.</div></div>
+  </div>
+
+  <div class="fin-card">
+    <div class="fin-h">Indstillinger</div>
+    <div class="fin-form">
+      <div class="fin-span2" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <label style="font-size:12px;color:var(--text-secondary)">Progressionsgrænse (DKK)</label>
+        <input class="fin-input" id="txThreshold" type="number" style="max-width:140px" />
+        <label style="font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:6px"><input type="checkbox" id="txCouple" /> Gift (dobbelt grænse)</label>
+      </div>
+    </div>
+    <div class="fin-note">
+      <b>Sådan regnes der (vejledende — ikke bindende skatterådgivning):</b><br>
+      • <b>Aktiedepot:</b> gevinst er aktieindkomst — <b>27%</b> op til progressionsgrænsen (2026: ~67.500 kr, dobbelt for gifte) og <b>42%</b> derover. Tab modregnes i gevinster.<br>
+      • <b>Aktiesparekonto:</b> <b>17%</b> lagerbeskatning (her estimeret på realiseret gevinst).<br>
+      • <b>Børneopsparing:</b> skattefri.<br>
+      • OBS: aktier bruger reelt <b>gennemsnitsmetoden</b> (ikke FIFO), og ASK beskattes af hele årets gevinst inkl. urealiseret. Tallene her er et overslag.
+    </div>
+  </div>
 </div>
 
 <!-- ===== AI ===== -->
@@ -4107,6 +4155,81 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     window.addEventListener('storage', renderAll);
     renderAll();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+
+<script>
+/* ===== Skat: Danish investment-tax estimate ===== */
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const get = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+  const set = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const fmtDKK = (n) => 'DKK ' + Math.round(n || 0).toLocaleString('da-DK');
+  const kr = (n) => (n >= 0 ? '+' : '−') + Math.abs(Math.round(n)).toLocaleString('da-DK') + ' kr';
+  const K_SALES = 'fin:sales', K_TH = 'fin:tax_threshold', K_CP = 'fin:tax_couple';
+  const TYPE_LABEL = { aktiedepot: 'Aktiedepot', ask: 'Aktiesparekonto', boern: 'Børneopsparing' };
+  const DEFAULT_THRESHOLD = 67500;
+
+  function threshold() {
+    let t = Number(get(K_TH)); if (!t || isNaN(t)) t = DEFAULT_THRESHOLD;
+    return get(K_CP) ? t * 2 : t;
+  }
+  function compute() {
+    const sales = get(K_SALES) || [];
+    let akt = 0, ask = 0, boern = 0;
+    sales.forEach(s => {
+      const g = ((Number(s.sell) || 0) - (Number(s.buy) || 0)) * (Number(s.qty) || 0);
+      if (s.type === 'ask') ask += g; else if (s.type === 'boern') boern += g; else akt += g;
+    });
+    const th = threshold();
+    let aktTax = 0;
+    if (akt > 0) aktTax = Math.min(akt, th) * 0.27 + Math.max(0, akt - th) * 0.42;
+    const askTax = Math.max(0, ask) * 0.17;
+    return { sales, akt, ask, boern, aktTax, askTax, totalTax: aktTax + askTax, realized: akt + ask + boern, th };
+  }
+  function render() {
+    const c = compute();
+    $('taxTotal').textContent = fmtDKK(c.totalTax);
+    $('taxSub').innerHTML = c.sales.length
+      ? `Realiseret gevinst <span class="${c.realized >= 0 ? 'fin-pos' : 'fin-neg'}">${kr(c.realized)}</span> · effektiv sats ${c.realized > 0 ? Math.round(c.totalTax / c.realized * 100) : 0}%`
+      : 'Registrér dine salg for at estimere skatten';
+    $('taxStats').innerHTML =
+      `<div class="fin-stat"><div class="fin-stat-l">Aktiedepot gevinst</div><div class="fin-stat-v ${c.akt >= 0 ? 'fin-pos' : 'fin-neg'}">${kr(c.akt)}</div></div>` +
+      `<div class="fin-stat"><div class="fin-stat-l">Skat aktiedepot</div><div class="fin-stat-v">${Math.round(c.aktTax).toLocaleString('da-DK')}</div></div>` +
+      `<div class="fin-stat"><div class="fin-stat-l">ASK gevinst</div><div class="fin-stat-v ${c.ask >= 0 ? 'fin-pos' : 'fin-neg'}">${kr(c.ask)}</div></div>` +
+      `<div class="fin-stat"><div class="fin-stat-l">Skat ASK (17%)</div><div class="fin-stat-v">${Math.round(c.askTax).toLocaleString('da-DK')}</div></div>`;
+    const listEl = $('txList');
+    listEl.innerHTML = c.sales.length ? c.sales.slice().reverse().map(s => {
+      const g = ((Number(s.sell) || 0) - (Number(s.buy) || 0)) * (Number(s.qty) || 0);
+      return `<div class="fin-hold" data-id="${s.id}"><div><div class="fin-hold-name">${esc(s.name || 'Salg')}</div><div class="fin-hold-meta"><span class="fin-chip" style="background:#ffffff10;color:var(--text-secondary)">${TYPE_LABEL[s.type] || s.type}</span><span>${(Number(s.qty) || 0)} stk · ${s.buy}→${s.sell}${s.sellDate ? ' · ' + s.sellDate : ''}</span></div></div><div class="fin-hold-val"><div class="fin-hold-v1 ${g >= 0 ? 'fin-pos' : 'fin-neg'}">${kr(g)}</div></div><div><button class="fin-hold-del" data-txdel="${s.id}">✕</button></div></div>`;
+    }).join('') : '<div class="fin-empty">Ingen salg registreret endnu.</div>';
+    const thEl = $('txThreshold'); if (thEl && !thEl.value) thEl.value = Number(get(K_TH)) || DEFAULT_THRESHOLD;
+    const cp = $('txCouple'); if (cp) cp.checked = !!get(K_CP);
+  }
+  function addSale() {
+    const qty = Number($('txQty').value); if (!qty) { $('txQty').focus(); return; }
+    const sales = get(K_SALES) || [];
+    sales.push({ id: uid(), name: $('txName').value.trim(), type: $('txType').value, qty, buy: Number($('txBuy').value) || 0, sell: Number($('txSell').value) || 0, buyDate: $('txBuyDate').value || '', sellDate: $('txSellDate').value || '' });
+    set(K_SALES, sales);
+    ['txName', 'txQty', 'txBuy', 'txSell'].forEach(id => $(id).value = '');
+    render();
+  }
+  function init() {
+    const b = $('txAdd'); if (b) b.addEventListener('click', addSale);
+    const th = $('txThreshold'); if (th) th.addEventListener('change', () => { set(K_TH, Number(th.value) || DEFAULT_THRESHOLD); render(); });
+    const cp = $('txCouple'); if (cp) cp.addEventListener('change', () => { set(K_CP, cp.checked); render(); });
+    document.addEventListener('click', (e) => {
+      const d = e.target.closest('[data-txdel]'); if (!d) return;
+      let s = get(K_SALES) || []; s = s.filter(x => x.id !== d.getAttribute('data-txdel')); set(K_SALES, s); render();
+    });
+    window.addEventListener('storage', render);
+    render();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
