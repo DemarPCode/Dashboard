@@ -1980,10 +1980,29 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .fin-pill:hover { color: var(--text-secondary); }
 .fin-pill.active { background: rgba(255,255,255,0.10); color: var(--text-primary); }
 .fin-pill-dir { width: 26px; height: 26px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }
+.fin-pill-icon { width: 30px; height: 26px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; }
 .fin-select-sm { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 999px; padding: 6px 12px; color: var(--text-primary); font-family: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+
+/* Account picker sheet ("Vælg konti") */
+.fin-acct-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 200; display: flex; align-items: flex-end; justify-content: center; -webkit-tap-highlight-color: transparent; }
+.fin-acct-overlay[hidden] { display: none; }
+.fin-acct-sheet { background: #14141a; border-radius: 20px 20px 0 0; padding: 10px 18px 24px; width: 100%; max-width: 480px; max-height: 78vh; overflow-y: auto; box-shadow: 0 -12px 40px rgba(0,0,0,0.5); }
+.fin-acct-sheet-handle { width: 36px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 999px; margin: 6px auto 14px; }
+.fin-acct-sheet-title { font-size: 17px; font-weight: 700; color: var(--text-primary); text-align: center; margin-bottom: 10px; }
+.fin-acct-section { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); margin: 14px 4px 4px; }
+.fin-acct-row { display: flex; align-items: center; gap: 12px; padding: 11px 4px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
+.fin-acct-row:last-child { border-bottom: 0; }
+.fin-acct-badge { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.06); color: var(--text-primary); font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.fin-acct-mid { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fin-acct-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.fin-acct-bal { font-size: 11.5px; color: var(--text-tertiary); font-family: var(--font-mono); }
+.fin-acct-row input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--accent); flex-shrink: 0; cursor: pointer; }
+.fin-acct-all .fin-acct-name { font-weight: 700; }
 
 /* Expandable holding cards (Portefølje) — compact quick-grid always visible,
    tap to reveal full Google-Sheets-style detail (Nordnet-app inspired). */
+.fin-hgroup-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin: 16px 4px 6px; }
+.fin-hgroup-title:first-child { margin-top: 2px; }
 .fin-hcard { border-bottom: 1px solid rgba(255,255,255,0.05); }
 .fin-hcard:last-child { border-bottom: 0; }
 .fin-hcard-head { padding: 13px 4px 12px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
@@ -1996,6 +2015,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 @media (max-width: 480px) { .fin-hcard-quickgrid { grid-template-columns: repeat(2, 1fr); row-gap: 10px; } }
 .fin-hcard-qlabel { font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 3px; }
 .fin-hcard-qval { font-size: 12.5px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.fin-hcard-qval2 { font-size: 10.5px; font-weight: 600; color: var(--text-tertiary); font-variant-numeric: tabular-nums; margin-top: 2px; }
+.fin-hcard-qval2.fin-pos, .fin-hcard-qval2.fin-neg { opacity: 0.85; }
 .fin-hcard-detail { display: none; padding: 4px 4px 16px; }
 .fin-hcard.open .fin-hcard-detail { display: block; }
 .fin-hcard-mgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -2005,9 +2026,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .fin-hcard-m-v { font-size: 13.5px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .fin-hcard-actions { display: flex; gap: 8px; margin-top: 12px; }
 
-.fin-pies { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-@media (max-width: 860px) { .fin-pies { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 480px) { .fin-pies { grid-template-columns: 1fr; } }
+.fin-pies { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 640px) { .fin-pies { grid-template-columns: 1fr; } }
 .fin-pie-card { background: rgba(255,255,255,0.02); border-radius: var(--radius-md); padding: 14px; }
 .fin-pie-title { font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 10px; text-align: center; }
 .fin-pie-svg { width: 116px; height: 116px; display: block; margin: 0 auto 12px; }
@@ -2123,9 +2143,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   <div class="fin-card">
     <div class="fin-h">Beholdninger</div>
     <div class="fin-toolbar">
-      <select class="fin-select-sm fin-toolbar-filter" data-role="depotfilter">
-        <option value="">Alle konti</option>
-      </select>
+      <button type="button" class="fin-select-sm fin-toolbar-filter" data-role="depotfilter-btn" data-open-acct-sheet>Alle konti</button>
       <div class="fin-pillgroup" data-role="unit">
         <button class="fin-pill" data-unit="pct">%</button>
         <button class="fin-pill" data-unit="kr">kr</button>
@@ -2135,6 +2153,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         <button class="fin-pill" data-sort="return">Afkast</button>
         <button class="fin-pill fin-pill-dir" data-dir-toggle="1" title="Skift retning">↓</button>
       </div>
+      <div class="fin-pillgroup" data-role="view">
+        <button class="fin-pill fin-pill-icon" data-view="flat" title="Liste">☰</button>
+        <button class="fin-pill fin-pill-icon" data-view="grouped" title="Gruppér efter type">▤</button>
+      </div>
     </div>
     <div id="phList"><div class="fin-empty">Ingen beholdninger endnu.</div></div>
   </div>
@@ -2142,9 +2164,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   <div class="fin-card">
     <div class="fin-h">Fordeling</div>
     <div class="fin-toolbar">
-      <select class="fin-select-sm fin-toolbar-filter" data-role="depotfilter">
-        <option value="">Alle konti</option>
-      </select>
+      <button type="button" class="fin-select-sm fin-toolbar-filter" data-role="depotfilter-btn" data-open-acct-sheet>Alle konti</button>
       <div class="fin-pillgroup" data-role="unit">
         <button class="fin-pill" data-unit="pct">%</button>
         <button class="fin-pill" data-unit="kr">kr</button>
@@ -2159,7 +2179,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       <div class="fin-pie-card"><div class="fin-pie-title">Pr. aktie</div><div id="pieStock"></div></div>
       <div class="fin-pie-card"><div class="fin-pie-title">Pr. depot</div><div id="pieDepot"></div></div>
       <div class="fin-pie-card"><div class="fin-pie-title">Pr. kontotype</div><div id="pieType"></div></div>
-      <div class="fin-pie-card"><div class="fin-pie-title">Pr. sektor</div><div id="pieSector"></div></div>
     </div>
   </div>
 
@@ -2176,6 +2195,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   <div class="fin-card">
     <div class="fin-h">Udbytte</div>
     <div id="finDivList"><div class="fin-empty">Tilføj udbytte-% og ex-dato på en beholdning (tryk ✎) for at se udbyttekalenderen.</div></div>
+  </div>
+
+  <!-- ===== "Vælg konti" bundark — delt mellem Beholdninger + Fordeling ===== -->
+  <div class="fin-acct-overlay" id="finAcctOverlay" hidden>
+    <div class="fin-acct-sheet">
+      <div class="fin-acct-sheet-handle"></div>
+      <div class="fin-acct-sheet-title">Vælg konti</div>
+      <div id="finAcctSheetBody"></div>
+      <button type="button" class="fin-btn fin-btn-primary" id="finAcctSheetClose" style="width:100%;margin-top:14px">Luk</button>
+    </div>
   </div>
 </div>
 
@@ -3850,20 +3879,59 @@ document.addEventListener('DOMContentLoaded', function () {
   let calMonth = new Date(); calMonth.setDate(1);
 
   // Display toggle: unit = '%' vs 'kr' for afkast/fordeling; sort = 'value' vs 'return';
-  // sortDir = 'desc'/'asc'; depotFilter = '' (alle konti) or a depot name.
+  // sortDir = 'desc'/'asc'; depotFilters = [] (alle konti) or array of depot
+  // names (multi-select); viewMode = 'flat' or 'grouped' (Børshandlede/Fonde).
   const K_UI = 'fin:port_ui';
-  let uiState = Object.assign({ unit: 'pct', sort: 'value', sortDir: 'desc', depotFilter: '' }, get(K_UI) || {});
+  let uiState = Object.assign({ unit: 'pct', sort: 'value', sortDir: 'desc', depotFilters: [], viewMode: 'flat' }, get(K_UI) || {});
+  if (typeof uiState.depotFilter === 'string') { if (uiState.depotFilter) uiState.depotFilters = [uiState.depotFilter]; delete uiState.depotFilter; }
+  if (!Array.isArray(uiState.depotFilters)) uiState.depotFilters = [];
   let expandedHoldings = new Set();
+  const TYPE_ABBR = { aktiedepot: 'AKT', ask: 'ASK', boern: 'BØR', opsparing: 'OPS' };
   function setUnit(u) { uiState.unit = u; set(K_UI, uiState); renderAll(); }
   function setSort(s) { uiState.sort = s; set(K_UI, uiState); renderAll(); }
   function toggleDir() { uiState.sortDir = uiState.sortDir === 'desc' ? 'asc' : 'desc'; set(K_UI, uiState); renderAll(); }
-  function setDepotFilter(d) { uiState.depotFilter = d; set(K_UI, uiState); renderAll(); }
+  function setViewMode(m) { uiState.viewMode = m; set(K_UI, uiState); renderAll(); }
+  function toggleDepotFilter(name) {
+    const i = uiState.depotFilters.indexOf(name);
+    if (i === -1) uiState.depotFilters.push(name); else uiState.depotFilters.splice(i, 1);
+    set(K_UI, uiState); renderAll();
+  }
+  function clearDepotFilters() { uiState.depotFilters = []; set(K_UI, uiState); renderAll(); }
   function sortMul() { return uiState.sortDir === 'asc' ? -1 : 1; }
+  function inDepotFilter(depotName) { return !uiState.depotFilters.length || uiState.depotFilters.includes(depotName); }
   function syncToolbars() {
     document.querySelectorAll('[data-unit]').forEach(b => b.classList.toggle('active', b.getAttribute('data-unit') === uiState.unit));
     document.querySelectorAll('[data-sort]').forEach(b => b.classList.toggle('active', b.getAttribute('data-sort') === uiState.sort));
     document.querySelectorAll('[data-dir-toggle]').forEach(b => { b.textContent = uiState.sortDir === 'asc' ? '↑' : '↓'; });
-    document.querySelectorAll('[data-role="depotfilter"]').forEach(sel => { if (sel.value !== uiState.depotFilter) sel.value = uiState.depotFilter; });
+    document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('active', b.getAttribute('data-view') === uiState.viewMode));
+    document.querySelectorAll('[data-role="depotfilter-btn"]').forEach(b => {
+      const n = uiState.depotFilters.length;
+      b.textContent = n === 0 ? 'Alle konti' : (n === 1 ? uiState.depotFilters[0] : n + ' konti');
+    });
+  }
+  // depot -> dominant kontotype abbreviation, based on its holdings' types
+  // Prefer matching the depot NAME itself (so "Danske Bank" -> DB, distinct
+  // from "Nordnet Aktiedepot" -> AKT, even though both hold aktiedepot-type
+  // funds and would otherwise collide on kontotype alone).
+  function depotAbbr(depotName) {
+    const nm = (depotName || '').toLowerCase();
+    if (/aktiesparekonto/.test(nm)) return 'ASK';
+    if (/børneopsparing|barnesparing/.test(nm)) return 'BØR';
+    if (/aktiedepot/.test(nm)) return 'AKT';
+    if (/opspar/.test(nm)) return 'OPS';
+    const words = (depotName || '').trim().split(/\s+/).filter(Boolean);
+    if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
+    if (words.length === 1) return words[0].slice(0, 3).toUpperCase();
+    // fall back to the depot's dominant kontotype if the name gave nothing
+    const counts = {};
+    holdings.forEach(h => { if (h.depot === depotName) counts[h.type] = (counts[h.type] || 0) + 1; });
+    const top = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+    return TYPE_ABBR[top] || '—';
+  }
+  function depotBalance(depotName) {
+    let sum = holdings.filter(h => h.depot === depotName).reduce((s, h) => s + valuate(h).value, 0);
+    (get(K_ACCT) || []).forEach(a => { if ((a.institution || a.name) === depotName) sum += Number(a.balance) || 0; });
+    return sum;
   }
   function allDepotNames() {
     const names = new Set();
@@ -3872,12 +3940,27 @@ document.addEventListener('DOMContentLoaded', function () {
     return Array.from(names).sort((a, b) => a.localeCompare(b, 'da'));
   }
   function renderDepotFilterOptions() {
+    const body = $('finAcctSheetBody'); if (!body) return;
     const names = allDepotNames();
-    document.querySelectorAll('[data-role="depotfilter"]').forEach(sel => {
-      const cur = sel.value;
-      sel.innerHTML = '<option value="">Alle konti</option>' + names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
-      sel.value = names.includes(cur) ? cur : uiState.depotFilter;
-    });
+    const allChecked = uiState.depotFilters.length === 0;
+    let html = `<label class="fin-acct-row fin-acct-all">
+        <span class="fin-acct-mid"><span class="fin-acct-name">Alle konti</span></span>
+        <input type="checkbox" data-acct-all ${allChecked ? 'checked' : ''} />
+      </label>`;
+    if (names.length) {
+      html += '<div class="fin-acct-section">Konti</div>';
+      html += names.map(n => {
+        const checked = uiState.depotFilters.includes(n);
+        return `<label class="fin-acct-row">
+          <span class="fin-acct-badge">${depotAbbr(n)}</span>
+          <span class="fin-acct-mid"><span class="fin-acct-name">${escapeHtml(n)}</span><span class="fin-acct-bal">${fmtDKK(depotBalance(n))}</span></span>
+          <input type="checkbox" data-acct="${escapeHtml(n)}" ${checked ? 'checked' : ''} />
+        </label>`;
+      }).join('');
+    } else {
+      html += '<div class="fin-empty">Ingen konti endnu.</div>';
+    }
+    body.innerHTML = html;
   }
   function fmtSignedDKK(n) {
     if (n == null || isNaN(n)) return '—';
@@ -3984,11 +4067,10 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function renderPies() {
-    const df = uiState.depotFilter;
-    const vals = holdings.map(h => ({ h, v: valuate(h) })).filter(x => x.v.value > 0 && (!df || x.h.depot === df));
+    const vals = holdings.map(h => ({ h, v: valuate(h) })).filter(x => x.v.value > 0 && inDepotFilter(x.h.depot));
     donut('pieStock', vals.map((x, i) => ({ label: x.h.name || x.h.ticker || '—', value: x.v.value, color: PALETTE[i % PALETTE.length], ret: x.v.totalReturn, retPct: x.v.totalReturnPct })));
     // depot + kontotype pies include cash accounts too (accounts have no return figure)
-    const accts = (get(K_ACCT) || []).filter(a => (Number(a.balance) || 0) > 0 && (!df || (a.institution || a.name) === df));
+    const accts = (get(K_ACCT) || []).filter(a => (Number(a.balance) || 0) > 0 && inDepotFilter(a.institution || a.name));
     const byDepot = {};
     vals.forEach(x => { const d = x.h.depot || 'Ukendt'; const g = byDepot[d] = byDepot[d] || { value: 0, ret: 0, cost: 0, hasCost: false }; g.value += x.v.value; g.ret += (x.v.totalReturn || 0); if (x.v.cost != null) { g.cost += x.v.cost; g.hasCost = true; } });
     accts.forEach(a => { const d = a.institution || a.name || 'Bank'; const g = byDepot[d] = byDepot[d] || { value: 0, ret: 0, cost: 0, hasCost: false }; g.value += Number(a.balance) || 0; });
@@ -3997,10 +4079,6 @@ document.addEventListener('DOMContentLoaded', function () {
     vals.forEach(x => { const t = x.h.type || 'aktiedepot'; const g = byType[t] = byType[t] || { value: 0, ret: 0, cost: 0, hasCost: false }; g.value += x.v.value; g.ret += (x.v.totalReturn || 0); if (x.v.cost != null) { g.cost += x.v.cost; g.hasCost = true; } });
     accts.forEach(a => { const t = a.type || 'opsparing'; const g = byType[t] = byType[t] || { value: 0, ret: 0, cost: 0, hasCost: false }; g.value += Number(a.balance) || 0; });
     donut('pieType', Object.keys(byType).map(t => { const g = byType[t]; return { label: TYPE_LABEL[t] || t, value: g.value, color: TYPE_COLOR[t] || '#999', ret: g.ret, retPct: g.hasCost && g.cost > 0 ? g.ret / g.cost * 100 : null }; }));
-    // sector pie — stocks only (accounts have no sector); manual/guessed tagging
-    const bySector = {};
-    vals.forEach(x => { const s = guessSector(x.h) || 'Ukendt'; const g = bySector[s] = bySector[s] || { value: 0, ret: 0, cost: 0, hasCost: false }; g.value += x.v.value; g.ret += (x.v.totalReturn || 0); if (x.v.cost != null) { g.cost += x.v.cost; g.hasCost = true; } });
-    donut('pieSector', Object.keys(bySector).map((s, i) => { const g = bySector[s]; return { label: s, value: g.value, color: PALETTE[i % PALETTE.length], ret: g.ret, retPct: g.hasCost && g.cost > 0 ? g.ret / g.cost * 100 : null }; }));
   }
 
   // ---- holdings list ----
@@ -4029,11 +4107,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const chip = `<span class="fin-chip" style="background:${(TYPE_COLOR[h.type] || '#888')}22;color:${TYPE_COLOR[h.type] || '#aaa'}">${TYPE_LABEL[h.type] || h.type || ''}</span>`;
     const iconLetter = (h.name || h.ticker || '?').trim().charAt(0).toUpperCase();
 
-    const mainRet = uiState.unit === 'kr' ? v.totalReturn : v.totalReturnPct;
-    const mainRetCls = mainRet == null ? '' : (mainRet >= 0 ? 'fin-pos' : 'fin-neg');
-    const mainRetTxt = mainRet == null ? '—' : (uiState.unit === 'kr' ? fmtSignedDKK(v.totalReturn) : fmtPct(v.totalReturnPct, true));
+    const retCls = v.totalReturnPct == null ? '' : (v.totalReturnPct >= 0 ? 'fin-pos' : 'fin-neg');
+    const retPctTxt = v.totalReturnPct != null ? fmtPct(v.totalReturnPct, true) : '—';
+    const retKrTxt = v.totalReturn != null ? fmtSignedDKK(v.totalReturn) : '—';
     const dayCls = v.dayPct == null ? '' : (v.dayPct >= 0 ? 'fin-pos' : 'fin-neg');
-    const dayTxt = v.dayPct != null ? fmtPct(v.dayPct, true) : '—';
+    const dayPctTxt = v.dayPct != null ? fmtPct(v.dayPct, true) : '—';
+    const dayKrTxt = v.dayPct != null ? fmtSignedDKK(v.dayDKK) : '—';
+    const gakTxt = h.gak !== '' && h.gak != null ? Number(h.gak).toLocaleString('da-DK') + ' kr' : '—';
 
     const open = expandedHoldings.has(h.id);
     const kursRetCls = v.retPct == null ? '' : (v.retPct >= 0 ? 'fin-pos' : 'fin-neg');
@@ -4064,10 +4144,26 @@ document.addEventListener('DOMContentLoaded', function () {
           <span class="fin-hcard-chevron">›</span>
         </div>
         <div class="fin-hcard-quickgrid">
-          <div><div class="fin-hcard-qlabel">Værdi</div><div class="fin-hcard-qval">${fmtDKK(v.value).replace('DKK ', '')} kr</div></div>
-          <div><div class="fin-hcard-qlabel">Afkast</div><div class="fin-hcard-qval ${mainRetCls}">${mainRetTxt}</div></div>
-          <div><div class="fin-hcard-qlabel">I dag</div><div class="fin-hcard-qval ${dayCls}">${dayTxt}</div></div>
-          <div><div class="fin-hcard-qlabel">Seneste</div><div class="fin-hcard-qval">${currentPriceLabel(h, v)}</div></div>
+          <div>
+            <div class="fin-hcard-qlabel">Værdi</div>
+            <div class="fin-hcard-qval">${fmtDKK(v.value).replace('DKK ', '')} kr</div>
+            <div class="fin-hcard-qval2">${(Number(h.shares) || 0).toLocaleString('da-DK')} stk</div>
+          </div>
+          <div>
+            <div class="fin-hcard-qlabel">Afkast</div>
+            <div class="fin-hcard-qval ${retCls}">${retPctTxt}</div>
+            <div class="fin-hcard-qval2 ${retCls}">${retKrTxt}</div>
+          </div>
+          <div>
+            <div class="fin-hcard-qlabel">I dag</div>
+            <div class="fin-hcard-qval ${dayCls}">${dayPctTxt}</div>
+            <div class="fin-hcard-qval2 ${dayCls}">${dayKrTxt}</div>
+          </div>
+          <div>
+            <div class="fin-hcard-qlabel">Seneste/GAK</div>
+            <div class="fin-hcard-qval">${currentPriceLabel(h, v)}</div>
+            <div class="fin-hcard-qval2">${gakTxt}</div>
+          </div>
         </div>
       </div>
       <div class="fin-hcard-detail">${detail}</div>
@@ -4076,15 +4172,24 @@ document.addEventListener('DOMContentLoaded', function () {
   function renderHoldings() {
     const el = $('phList');
     if (!holdings.length) { el.innerHTML = '<div class="fin-empty">Ingen beholdninger endnu.</div>'; return; }
-    const df = uiState.depotFilter;
-    let withV = holdings.filter(h => !df || h.depot === df).map(h => ({ h, v: valuate(h) }));
-    if (!withV.length) { el.innerHTML = '<div class="fin-empty">Ingen beholdninger i "' + escapeHtml(df) + '".</div>'; syncToolbars(); return; }
-    withV.sort((a, b) => {
+    let withV = holdings.filter(h => inDepotFilter(h.depot)).map(h => ({ h, v: valuate(h) }));
+    if (!withV.length) { el.innerHTML = '<div class="fin-empty">Ingen beholdninger i valgte konti.</div>'; syncToolbars(); return; }
+    const sortFn = (a, b) => {
       const ka = uiState.sort === 'value' ? a.v.value : (uiState.unit === 'kr' ? a.v.totalReturn : a.v.totalReturnPct);
       const kb = uiState.sort === 'value' ? b.v.value : (uiState.unit === 'kr' ? b.v.totalReturn : b.v.totalReturnPct);
       return ((kb == null ? -Infinity : kb) - (ka == null ? -Infinity : ka)) * sortMul();
-    });
-    el.innerHTML = withV.map(({ h, v }) => holdingCardHTML(h, v)).join('');
+    };
+    if (uiState.viewMode === 'grouped') {
+      const traded = withV.filter(x => !x.h.fundKey).sort(sortFn);
+      const funds = withV.filter(x => x.h.fundKey).sort(sortFn);
+      let html = '';
+      if (traded.length) html += '<div class="fin-hgroup-title">Børshandlede</div>' + traded.map(({ h, v }) => holdingCardHTML(h, v)).join('');
+      if (funds.length) html += '<div class="fin-hgroup-title">Fonde</div>' + funds.map(({ h, v }) => holdingCardHTML(h, v)).join('');
+      el.innerHTML = html;
+    } else {
+      withV.sort(sortFn);
+      el.innerHTML = withV.map(({ h, v }) => holdingCardHTML(h, v)).join('');
+    }
     syncToolbars();
   }
 
@@ -4328,9 +4433,14 @@ document.addEventListener('DOMContentLoaded', function () {
       const ub = e.target.closest('[data-unit]'); if (ub) { setUnit(ub.getAttribute('data-unit')); return; }
       const sb = e.target.closest('[data-sort]'); if (sb) { setSort(sb.getAttribute('data-sort')); return; }
       const db = e.target.closest('[data-dir-toggle]'); if (db) { toggleDir(); return; }
+      const vb = e.target.closest('[data-view]'); if (vb) { setViewMode(vb.getAttribute('data-view')); return; }
+      const openBtn = e.target.closest('[data-open-acct-sheet]'); if (openBtn) { renderDepotFilterOptions(); const ov = $('finAcctOverlay'); if (ov) ov.removeAttribute('hidden'); return; }
+      const closeBtn = e.target.closest('#finAcctSheetClose'); if (closeBtn) { const ov = $('finAcctOverlay'); if (ov) ov.setAttribute('hidden', ''); return; }
+      if (e.target.id === 'finAcctOverlay') { e.target.setAttribute('hidden', ''); return; }
     });
     document.addEventListener('change', (e) => {
-      const df = e.target.closest('[data-role="depotfilter"]'); if (df) { setDepotFilter(df.value); return; }
+      const all = e.target.closest('[data-acct-all]'); if (all) { clearDepotFilters(); return; }
+      const acct = e.target.closest('[data-acct]'); if (acct) { toggleDepotFilter(acct.getAttribute('data-acct')); return; }
     });
     const prev = $('finCalPrev'), next = $('finCalNext');
     if (prev) prev.addEventListener('click', () => { calMonth.setMonth(calMonth.getMonth() - 1); renderCalendar(); });
