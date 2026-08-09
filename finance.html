@@ -2053,6 +2053,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     <div class="fin-form">
       <input class="fin-input fin-span2" id="phName" type="text" placeholder="Navn (fx Novo Nordisk B)" autocomplete="off" />
       <input class="fin-input" id="phTicker" type="text" placeholder="Ticker (fx NOVO-B.CO)" autocomplete="off" spellcheck="false" />
+      <select class="fin-select fin-span2" id="phFundKey">
+        <option value="">— Dansk fond uden ticker? Vælg her i stedet —</option>
+        <option value="nordnet-teknologi-indeks">Nordnet Teknologi Indeks</option>
+        <option value="danske-invest-europa-indeks-bnp">Danske Invest Europa Indeks BNP</option>
+        <option value="danske-invest-teknologi-indeks">Danske Invest Teknologi Indeks</option>
+        <option value="maj-invest-ai-semiconductor">Maj Invest UCITS ETF AI & Semiconductor</option>
+      </select>
       <input class="fin-input" id="phShares" type="number" inputmode="decimal" placeholder="Antal" />
       <input class="fin-input" id="phGak" type="number" inputmode="decimal" placeholder="GAK / købskurs (DKK)" />
       <input class="fin-input" id="phManual" type="number" inputmode="decimal" placeholder="Manuel kurs (hvis ingen ticker)" />
@@ -2066,12 +2073,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       </select>
       <button class="fin-btn fin-btn-primary fin-span2" id="phAdd">+ Tilføj beholdning</button>
     </div>
-    <div class="fin-note" id="phTip">💡 Ticker skal matche Yahoo Finance. Københavns-aktier ender på <b>.CO</b> (fx NOVO-B.CO, DSV.CO), tyske børs-ETF'er (Xetra) på <b>.DE</b> (fx VWCE.DE, EUNL.DE), amerikanske bruger symbolet direkte (fx AAPL). Valuta (DKK/EUR/USD) omregnes automatisk. Ingen ticker? Sæt en manuel kurs.</div>
+    <div class="fin-note" id="phTip">💡 Ticker skal matche Yahoo Finance. Københavns-aktier ender på <b>.CO</b> (fx NOVO-B.CO, DSV.CO), tyske børs-ETF'er (Xetra) på <b>.DE</b> (fx VWCE.DE, EUNL.DE), amerikanske bruger symbolet direkte (fx AAPL). Valuta (DKK/EUR/USD) omregnes automatisk. Danske investeringsforeningsfonde uden ticker (Nordnet-fonde, Danske Invest, Maj Invest m.fl.) kan i stedet vælges i dropdown'en ovenfor — de opdateres også live. Hverken ticker eller fond? Sæt en manuel kurs.</div>
   </div>
 
   <div class="fin-card">
     <div class="fin-h">Hurtig-import (flere beholdninger på én gang)</div>
-    <div class="fin-note" style="margin-top:0">Én linje pr. beholdning: <b>Navn,Ticker,Antal,GAK,ManuelKurs,Depot,Kontotype</b>. Kontotype: aktiedepot / ask / boern / opsparing. Lad Ticker eller ManuelKurs stå tomt, hvis det ikke er relevant.</div>
+    <div class="fin-note" style="margin-top:0">Én linje pr. beholdning: <b>Navn,Ticker,Antal,GAK,ManuelKurs,Depot,Kontotype,FundKey</b>. Kontotype: aktiedepot / ask / boern / opsparing. FundKey (valgfri, for danske fonde uden ticker): nordnet-teknologi-indeks / danske-invest-europa-indeks-bnp / danske-invest-teknologi-indeks / maj-invest-ai-semiconductor. Lad felter stå tomme, hvis de ikke er relevante.</div>
     <textarea id="phBulk" class="fin-input" style="width:100%;min-height:150px;font-family:var(--font-mono);font-size:11.5px;white-space:pre;resize:vertical" placeholder="Novo Nordisk A/S,NOVO-B.CO,20,372.17,,Nordnet Aktiedepot,aktiedepot"></textarea>
     <button class="fin-btn fin-btn-primary" id="phBulkAdd" style="margin-top:10px">+ Importér linjer</button>
     <div class="fin-note" id="phBulkResult" style="display:none;margin-top:10px"></div>
@@ -3739,13 +3746,21 @@ document.addEventListener('DOMContentLoaded', function () {
   const set = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
-  const K_HOLD = 'fin:holdings', K_Q = 'fin:quotes', K_HIST = 'fin:history', K_FX = 'fin:fx', K_ACCT = 'fin:accounts';
+  const K_HOLD = 'fin:holdings', K_Q = 'fin:quotes', K_HIST = 'fin:history', K_FX = 'fin:fx', K_ACCT = 'fin:accounts', K_FQ = 'fin:fundquotes';
   const TYPE_LABEL = { aktiedepot: 'Aktiedepot', ask: 'Aktiesparekonto', boern: 'Børneopsparing', opsparing: 'Opsparing' };
   const TYPE_COLOR = { aktiedepot: '#6EE7B7', ask: '#7DD3FC', boern: '#F2C063', opsparing: '#B794F4' };
   const PALETTE = ['#6EE7B7', '#7DD3FC', '#F2C063', '#B794F4', '#F48FB1', '#E07658', '#5AB6C9', '#9CCC65', '#FF8A8A', '#A5B4FC', '#FBBF24', '#4DD0E1'];
+  // Danish funds with no Yahoo ticker — scraped live via /api/fundquote.
+  const FUND_NAMES = {
+    'nordnet-teknologi-indeks': 'Nordnet Teknologi Indeks',
+    'danske-invest-europa-indeks-bnp': 'Danske Invest Europa Indeks BNP',
+    'danske-invest-teknologi-indeks': 'Danske Invest Teknologi Indeks',
+    'maj-invest-ai-semiconductor': 'Maj Invest UCITS ETF AI & Semiconductor',
+  };
 
   let holdings = get(K_HOLD) || [];
   let quotes = get(K_Q) || {};        // { TICKER: {price, prevClose, currency, changePct, changeAbs, ts} }
+  let fundQuotes = get(K_FQ) || {};   // { fundKey: {name, price, currency, error} }
   let fx = get(K_FX) || { rates: { DKK: 1 }, ts: 0 };
   let calMonth = new Date(); calMonth.setDate(1);
 
@@ -3776,6 +3791,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ---- valuation ----
   function priceDKKof(h) {
+    if (h.fundKey) {
+      const fq = fundQuotes[h.fundKey];
+      if (fq && fq.price != null && !fq.error) return toDKK(fq.price, fq.currency);
+    }
     const q = h.ticker ? quotes[h.ticker.toUpperCase()] : null;
     if (q && q.price != null && !q.error) return toDKK(q.price, q.currency);
     if (h.manualPrice != null && h.manualPrice !== '') return Number(h.manualPrice);
@@ -3844,7 +3863,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const rows = holdings.map(h => {
       const v = valuate(h);
       const q = v.q;
-      const priceInfo = q && !q.error ? `${(Math.round(v.pDKK * 100) / 100).toLocaleString('da-DK')} kr` : (h.ticker ? '<span style="color:var(--warning)">ingen kurs</span>' : 'manuel');
+      const fq = h.fundKey ? fundQuotes[h.fundKey] : null;
+      const priceInfo = (fq && fq.price != null && !fq.error)
+        ? `${(Math.round(v.pDKK * 100) / 100).toLocaleString('da-DK')} kr · ${escapeHtml(FUND_NAMES[h.fundKey] || 'fond')} (live)`
+        : (fq && fq.error) ? '<span style="color:var(--warning)">fondskurs fejlede</span>'
+        : (q && !q.error) ? `${(Math.round(v.pDKK * 100) / 100).toLocaleString('da-DK')} kr`
+        : (h.fundKey ? 'henter fondskurs…' : (h.ticker ? '<span style="color:var(--warning)">ingen kurs</span>' : 'manuel'));
       const dayCls = v.dayPct == null ? '' : (v.dayPct >= 0 ? 'fin-pos' : 'fin-neg');
       const retCls = v.retPct == null ? '' : (v.retPct >= 0 ? 'fin-pos' : 'fin-neg');
       const chip = `<span class="fin-chip" style="background:${(TYPE_COLOR[h.type] || '#888')}22;color:${TYPE_COLOR[h.type] || '#aaa'}">${TYPE_LABEL[h.type] || h.type || ''}</span>`;
@@ -3961,6 +3985,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function renderAll() {
     holdings = get(K_HOLD) || holdings;
     quotes = get(K_Q) || quotes;
+    fundQuotes = get(K_FQ) || fundQuotes;
     renderTotals();
     renderHoldings();
     renderPies();
@@ -3973,18 +3998,23 @@ document.addEventListener('DOMContentLoaded', function () {
   async function refresh() {
     const btn = $('finRefresh');
     const tickers = Array.from(new Set(holdings.map(h => (h.ticker || '').trim().toUpperCase()).filter(Boolean)));
+    const fundKeys = Array.from(new Set(holdings.map(h => h.fundKey).filter(Boolean)));
     if (btn) btn.classList.add('spin');
     await loadFX();
+    const jobs = [];
     if (tickers.length) {
-      try {
-        const r = await fetch('/api/quote?symbols=' + encodeURIComponent(tickers.join(',')));
-        const j = await r.json();
-        if (j && j.quotes) {
-          Object.keys(j.quotes).forEach(sym => { quotes[sym.toUpperCase()] = Object.assign({ ts: j.ts }, j.quotes[sym]); });
-          set(K_Q, quotes);
-        }
-      } catch (e) {}
+      jobs.push(fetch('/api/quote?symbols=' + encodeURIComponent(tickers.join(',')))
+        .then(r => r.json())
+        .then(j => { if (j && j.quotes) { Object.keys(j.quotes).forEach(sym => { quotes[sym.toUpperCase()] = Object.assign({ ts: j.ts }, j.quotes[sym]); }); set(K_Q, quotes); } })
+        .catch(() => {}));
     }
+    if (fundKeys.length) {
+      jobs.push(fetch('/api/fundquote?funds=' + encodeURIComponent(fundKeys.join(',')))
+        .then(r => r.json())
+        .then(j => { if (j && j.quotes) { Object.assign(fundQuotes, j.quotes); set(K_FQ, fundQuotes); } })
+        .catch(() => {}));
+    }
+    await Promise.all(jobs);
     snapshotToday();
     renderAll();
     if (btn) setTimeout(() => btn.classList.remove('spin'), 500);
@@ -3992,13 +4022,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ---- add / edit / delete ----
   function addHolding() {
-    const name = $('phName').value.trim();
+    const fundKey = $('phFundKey').value;
+    const name = $('phName').value.trim() || (fundKey ? FUND_NAMES[fundKey] : '');
     const ticker = $('phTicker').value.trim();
     const shares = $('phShares').value.trim();
-    if (!name && !ticker) { $('phName').focus(); return; }
+    if (!name && !ticker && !fundKey) { $('phName').focus(); return; }
     if (!shares) { $('phShares').focus(); return; }
     holdings.push({
-      id: uid(), name, ticker,
+      id: uid(), name, ticker, fundKey,
       shares: Number(shares),
       gak: $('phGak').value.trim() || '',
       manualPrice: $('phManual').value.trim() || '',
@@ -4008,6 +4039,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     set(K_HOLD, holdings);
     ['phName', 'phTicker', 'phShares', 'phGak', 'phManual', 'phDepot'].forEach(id => $(id).value = '');
+    $('phFundKey').value = '';
     renderAll();
     refresh();
   }
@@ -4047,13 +4079,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const errors = [];
     lines.forEach((line, i) => {
       const parts = line.split(',').map(p => p.trim());
-      const [name, ticker, sharesRaw, gak, manual, depot, typeRaw] = parts;
+      const [name, ticker, sharesRaw, gak, manual, depot, typeRaw, fundKeyRaw] = parts;
       const shares = Number((sharesRaw || '').replace(',', '.'));
-      if (!name && !ticker) { errors.push('Linje ' + (i + 1) + ': mangler navn/ticker'); return; }
+      const fundKey = FUND_NAMES[fundKeyRaw] ? fundKeyRaw : '';
+      if (fundKeyRaw && !fundKey) { errors.push('Linje ' + (i + 1) + ': ukendt FundKey "' + fundKeyRaw + '"'); return; }
+      if (!name && !ticker && !fundKey) { errors.push('Linje ' + (i + 1) + ': mangler navn/ticker/fond'); return; }
       if (!shares || isNaN(shares)) { errors.push('Linje ' + (i + 1) + ': ugyldigt antal'); return; }
       const type = TYPE_ALIAS[(typeRaw || '').toLowerCase()] || 'aktiedepot';
       holdings.push({
-        id: uid(), name: name || '', ticker: ticker || '', shares,
+        id: uid(), name: name || (fundKey ? FUND_NAMES[fundKey] : ''), ticker: ticker || '', fundKey, shares,
         gak: (gak || '').replace(',', '.'),
         manualPrice: (manual || '').replace(',', '.'),
         depot: depot || '', type, divPct: '', divDate: '',
