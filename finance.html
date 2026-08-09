@@ -1974,18 +1974,29 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* Toolbar: unit (%/kr) + sort (Værdi/Afkast) pill toggles */
 .fin-toolbar { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-.fin-pillgroup { display: inline-flex; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 999px; padding: 2px; gap: 2px; }
+.fin-toolbar-filter { margin-right: auto; }
+.fin-pillgroup { display: inline-flex; align-items: center; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 999px; padding: 2px; gap: 2px; }
 .fin-pill { border: none; background: transparent; color: var(--text-tertiary); font-family: inherit; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer; transition: background 0.15s, color 0.15s; }
 .fin-pill:hover { color: var(--text-secondary); }
 .fin-pill.active { background: rgba(255,255,255,0.10); color: var(--text-primary); }
+.fin-pill-dir { width: 26px; height: 26px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }
+.fin-select-sm { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 999px; padding: 6px 12px; color: var(--text-primary); font-family: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
 
-/* Expandable holding cards (Portefølje) */
+/* Expandable holding cards (Portefølje) — compact quick-grid always visible,
+   tap to reveal full Google-Sheets-style detail (Nordnet-app inspired). */
 .fin-hcard { border-bottom: 1px solid rgba(255,255,255,0.05); }
 .fin-hcard:last-child { border-bottom: 0; }
-.fin-hcard-head { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 12px 4px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.fin-hcard-head { padding: 13px 4px 12px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.fin-hcard-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.fin-hcard-icon { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #0a0a0b; }
+.fin-hcard-title-mid { flex: 1; min-width: 0; }
 .fin-hcard-chevron { color: var(--text-quaternary); font-size: 13px; transition: transform 0.2s cubic-bezier(0.22,1,0.36,1); flex-shrink: 0; }
 .fin-hcard.open .fin-hcard-chevron { transform: rotate(90deg); }
-.fin-hcard-detail { display: none; padding: 2px 4px 16px; }
+.fin-hcard-quickgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+@media (max-width: 480px) { .fin-hcard-quickgrid { grid-template-columns: repeat(2, 1fr); row-gap: 10px; } }
+.fin-hcard-qlabel { font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 3px; }
+.fin-hcard-qval { font-size: 12.5px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.fin-hcard-detail { display: none; padding: 4px 4px 16px; }
 .fin-hcard.open .fin-hcard-detail { display: block; }
 .fin-hcard-mgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 @media (max-width: 560px) { .fin-hcard-mgrid { grid-template-columns: repeat(2, 1fr); } }
@@ -2109,6 +2120,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   <div class="fin-card">
     <div class="fin-h">Beholdninger</div>
     <div class="fin-toolbar">
+      <select class="fin-select-sm fin-toolbar-filter" data-role="depotfilter">
+        <option value="">Alle konti</option>
+      </select>
       <div class="fin-pillgroup" data-role="unit">
         <button class="fin-pill" data-unit="pct">%</button>
         <button class="fin-pill" data-unit="kr">kr</button>
@@ -2116,6 +2130,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       <div class="fin-pillgroup" data-role="sort">
         <button class="fin-pill" data-sort="value">Værdi</button>
         <button class="fin-pill" data-sort="return">Afkast</button>
+        <button class="fin-pill fin-pill-dir" data-dir-toggle="1" title="Skift retning">↓</button>
       </div>
     </div>
     <div id="phList"><div class="fin-empty">Ingen beholdninger endnu.</div></div>
@@ -2124,6 +2139,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   <div class="fin-card">
     <div class="fin-h">Fordeling</div>
     <div class="fin-toolbar">
+      <select class="fin-select-sm fin-toolbar-filter" data-role="depotfilter">
+        <option value="">Alle konti</option>
+      </select>
       <div class="fin-pillgroup" data-role="unit">
         <button class="fin-pill" data-unit="pct">%</button>
         <button class="fin-pill" data-unit="kr">kr</button>
@@ -2131,6 +2149,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       <div class="fin-pillgroup" data-role="sort">
         <button class="fin-pill" data-sort="value">Værdi</button>
         <button class="fin-pill" data-sort="return">Afkast</button>
+        <button class="fin-pill fin-pill-dir" data-dir-toggle="1" title="Skift retning">↓</button>
       </div>
     </div>
     <div class="fin-pies">
@@ -3806,15 +3825,35 @@ document.addEventListener('DOMContentLoaded', function () {
   let fx = get(K_FX) || { rates: { DKK: 1 }, ts: 0 };
   let calMonth = new Date(); calMonth.setDate(1);
 
-  // Display toggle: unit = '%' vs 'kr' for afkast/fordeling; sort = 'value' vs 'return'.
+  // Display toggle: unit = '%' vs 'kr' for afkast/fordeling; sort = 'value' vs 'return';
+  // sortDir = 'desc'/'asc'; depotFilter = '' (alle konti) or a depot name.
   const K_UI = 'fin:port_ui';
-  let uiState = Object.assign({ unit: 'pct', sort: 'value' }, get(K_UI) || {});
+  let uiState = Object.assign({ unit: 'pct', sort: 'value', sortDir: 'desc', depotFilter: '' }, get(K_UI) || {});
   let expandedHoldings = new Set();
   function setUnit(u) { uiState.unit = u; set(K_UI, uiState); renderAll(); }
   function setSort(s) { uiState.sort = s; set(K_UI, uiState); renderAll(); }
+  function toggleDir() { uiState.sortDir = uiState.sortDir === 'desc' ? 'asc' : 'desc'; set(K_UI, uiState); renderAll(); }
+  function setDepotFilter(d) { uiState.depotFilter = d; set(K_UI, uiState); renderAll(); }
+  function sortMul() { return uiState.sortDir === 'asc' ? -1 : 1; }
   function syncToolbars() {
     document.querySelectorAll('[data-unit]').forEach(b => b.classList.toggle('active', b.getAttribute('data-unit') === uiState.unit));
     document.querySelectorAll('[data-sort]').forEach(b => b.classList.toggle('active', b.getAttribute('data-sort') === uiState.sort));
+    document.querySelectorAll('[data-dir-toggle]').forEach(b => { b.textContent = uiState.sortDir === 'asc' ? '↑' : '↓'; });
+    document.querySelectorAll('[data-role="depotfilter"]').forEach(sel => { if (sel.value !== uiState.depotFilter) sel.value = uiState.depotFilter; });
+  }
+  function allDepotNames() {
+    const names = new Set();
+    holdings.forEach(h => { if (h.depot) names.add(h.depot); });
+    (get(K_ACCT) || []).forEach(a => { const n = a.institution || a.name; if (n) names.add(n); });
+    return Array.from(names).sort((a, b) => a.localeCompare(b, 'da'));
+  }
+  function renderDepotFilterOptions() {
+    const names = allDepotNames();
+    document.querySelectorAll('[data-role="depotfilter"]').forEach(sel => {
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">Alle konti</option>' + names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+      sel.value = names.includes(cur) ? cur : uiState.depotFilter;
+    });
   }
   function fmtSignedDKK(n) {
     if (n == null || isNaN(n)) return '—';
@@ -3893,7 +3932,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const sorted = rows.slice().sort((a, b) => {
       const ka = uiState.sort === 'return' ? (a.ret == null ? -Infinity : a.ret) : a.value;
       const kb = uiState.sort === 'return' ? (b.ret == null ? -Infinity : b.ret) : b.value;
-      return kb - ka;
+      return (kb - ka) * sortMul();
     });
     const C = 58, R = 42, SW = 16, circ = 2 * Math.PI * R;
     let off = 0;
@@ -3921,10 +3960,11 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function renderPies() {
-    const vals = holdings.map(h => ({ h, v: valuate(h) })).filter(x => x.v.value > 0);
+    const df = uiState.depotFilter;
+    const vals = holdings.map(h => ({ h, v: valuate(h) })).filter(x => x.v.value > 0 && (!df || x.h.depot === df));
     donut('pieStock', vals.map((x, i) => ({ label: x.h.name || x.h.ticker || '—', value: x.v.value, color: PALETTE[i % PALETTE.length], ret: x.v.totalReturn, retPct: x.v.totalReturnPct })));
     // depot + kontotype pies include cash accounts too (accounts have no return figure)
-    const accts = (get(K_ACCT) || []).filter(a => (Number(a.balance) || 0) > 0);
+    const accts = (get(K_ACCT) || []).filter(a => (Number(a.balance) || 0) > 0 && (!df || (a.institution || a.name) === df));
     const byDepot = {};
     vals.forEach(x => { const d = x.h.depot || 'Ukendt'; const g = byDepot[d] = byDepot[d] || { value: 0, ret: 0, cost: 0, hasCost: false }; g.value += x.v.value; g.ret += (x.v.totalReturn || 0); if (x.v.cost != null) { g.cost += x.v.cost; g.hasCost = true; } });
     accts.forEach(a => { const d = a.institution || a.name || 'Bank'; const g = byDepot[d] = byDepot[d] || { value: 0, ret: 0, cost: 0, hasCost: false }; g.value += Number(a.balance) || 0; });
@@ -3939,20 +3979,33 @@ document.addEventListener('DOMContentLoaded', function () {
   function metricTile(label, value) {
     return `<div class="fin-hcard-metric"><div class="fin-hcard-m-l">${label}</div><div class="fin-hcard-m-v">${value}</div></div>`;
   }
+  function currentPriceLabel(h, v) {
+    const q = v.q;
+    const fq = h.fundKey ? fundQuotes[h.fundKey] : null;
+    if (fq && fq.price != null && !fq.error) return (Math.round(fq.price * 100) / 100).toLocaleString('da-DK') + ' ' + (fq.currency || 'DKK');
+    if (fq && fq.error) return '—';
+    if (q && q.price != null && !q.error) return (Math.round(q.price * 100) / 100).toLocaleString('da-DK') + ' ' + (q.currency || '');
+    if (h.fundKey) return 'henter…';
+    if (h.ticker) return '—';
+    return 'manuel';
+  }
+  // Nordnet-app inspired: name row + always-visible Værdi/Afkast/I dag/Seneste
+  // quick-grid; tap to reveal full Google-Sheets-style detail below.
   function holdingCardHTML(h, v) {
     const q = v.q;
     const fq = h.fundKey ? fundQuotes[h.fundKey] : null;
-    const priceInfo = (fq && fq.price != null && !fq.error)
-      ? `${(Math.round(v.pDKK * 100) / 100).toLocaleString('da-DK')} kr · ${escapeHtml(FUND_NAMES[h.fundKey] || 'fond')} (live)`
+    const isLive = (fq && fq.price != null && !fq.error) || (q && !q.error);
+    const sourceNote = fq && fq.price != null && !fq.error ? escapeHtml(FUND_NAMES[h.fundKey] || 'fond') + ' (live)'
       : (fq && fq.error) ? '<span style="color:var(--warning)">fondskurs fejlede</span>'
-      : (q && !q.error) ? `${(Math.round(v.pDKK * 100) / 100).toLocaleString('da-DK')} kr`
-      : (h.fundKey ? 'henter fondskurs…' : (h.ticker ? '<span style="color:var(--warning)">ingen kurs</span>' : 'manuel'));
+      : (!isLive && (h.ticker || h.fundKey)) ? '<span style="color:var(--warning)">ingen kurs</span>' : '';
     const chip = `<span class="fin-chip" style="background:${(TYPE_COLOR[h.type] || '#888')}22;color:${TYPE_COLOR[h.type] || '#aaa'}">${TYPE_LABEL[h.type] || h.type || ''}</span>`;
+    const iconLetter = (h.name || h.ticker || '?').trim().charAt(0).toUpperCase();
 
     const mainRet = uiState.unit === 'kr' ? v.totalReturn : v.totalReturnPct;
     const mainRetCls = mainRet == null ? '' : (mainRet >= 0 ? 'fin-pos' : 'fin-neg');
-    const mainRetTxt = mainRet == null ? '' : (uiState.unit === 'kr' ? fmtSignedDKK(v.totalReturn) : fmtPct(v.totalReturnPct, true)) + ' afkast';
+    const mainRetTxt = mainRet == null ? '—' : (uiState.unit === 'kr' ? fmtSignedDKK(v.totalReturn) : fmtPct(v.totalReturnPct, true));
     const dayCls = v.dayPct == null ? '' : (v.dayPct >= 0 ? 'fin-pos' : 'fin-neg');
+    const dayTxt = v.dayPct != null ? fmtPct(v.dayPct, true) : '—';
 
     const open = expandedHoldings.has(h.id);
     const kursRetCls = v.retPct == null ? '' : (v.retPct >= 0 ? 'fin-pos' : 'fin-neg');
@@ -3974,16 +4027,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
     return `<div class="fin-hcard${open ? ' open' : ''}" data-id="${h.id}">
       <div class="fin-hcard-head" data-toggle="${h.id}">
-        <div>
-          <div class="fin-hold-name">${escapeHtml(h.name || h.ticker || '—')}</div>
-          <div class="fin-hold-meta">${chip}${h.depot ? '<span>' + escapeHtml(h.depot) + '</span>' : ''}<span>${(Number(h.shares) || 0).toLocaleString('da-DK')} stk · ${priceInfo}</span></div>
+        <div class="fin-hcard-title-row">
+          <span class="fin-hcard-icon" style="background:${TYPE_COLOR[h.type] || '#888'}">${iconLetter}</span>
+          <div class="fin-hcard-title-mid">
+            <div class="fin-hold-name">${escapeHtml(h.name || h.ticker || '—')}</div>
+            <div class="fin-hold-meta">${chip}${h.depot ? '<span>' + escapeHtml(h.depot) + '</span>' : ''}${sourceNote ? '<span>' + sourceNote + '</span>' : ''}</div>
+          </div>
+          <span class="fin-hcard-chevron">›</span>
         </div>
-        <div class="fin-hold-val">
-          <div class="fin-hold-v1">${fmtDKK(v.value)}</div>
-          <div class="fin-hold-v2 ${dayCls}">${v.dayPct != null ? fmtPct(v.dayPct, true) + ' i dag' : ''}</div>
-          <div class="fin-hold-v2 ${mainRetCls}">${mainRetTxt}</div>
+        <div class="fin-hcard-quickgrid">
+          <div><div class="fin-hcard-qlabel">Værdi</div><div class="fin-hcard-qval">${fmtDKK(v.value).replace('DKK ', '')} kr</div></div>
+          <div><div class="fin-hcard-qlabel">Afkast</div><div class="fin-hcard-qval ${mainRetCls}">${mainRetTxt}</div></div>
+          <div><div class="fin-hcard-qlabel">I dag</div><div class="fin-hcard-qval ${dayCls}">${dayTxt}</div></div>
+          <div><div class="fin-hcard-qlabel">Seneste</div><div class="fin-hcard-qval">${currentPriceLabel(h, v)}</div></div>
         </div>
-        <span class="fin-hcard-chevron">›</span>
       </div>
       <div class="fin-hcard-detail">${detail}</div>
     </div>`;
@@ -3991,11 +4048,13 @@ document.addEventListener('DOMContentLoaded', function () {
   function renderHoldings() {
     const el = $('phList');
     if (!holdings.length) { el.innerHTML = '<div class="fin-empty">Ingen beholdninger endnu.</div>'; return; }
-    const withV = holdings.map(h => ({ h, v: valuate(h) }));
+    const df = uiState.depotFilter;
+    let withV = holdings.filter(h => !df || h.depot === df).map(h => ({ h, v: valuate(h) }));
+    if (!withV.length) { el.innerHTML = '<div class="fin-empty">Ingen beholdninger i "' + escapeHtml(df) + '".</div>'; syncToolbars(); return; }
     withV.sort((a, b) => {
       const ka = uiState.sort === 'value' ? a.v.value : (uiState.unit === 'kr' ? a.v.totalReturn : a.v.totalReturnPct);
       const kb = uiState.sort === 'value' ? b.v.value : (uiState.unit === 'kr' ? b.v.totalReturn : b.v.totalReturnPct);
-      return (kb == null ? -Infinity : kb) - (ka == null ? -Infinity : ka);
+      return ((kb == null ? -Infinity : kb) - (ka == null ? -Infinity : ka)) * sortMul();
     });
     el.innerHTML = withV.map(({ h, v }) => holdingCardHTML(h, v)).join('');
     syncToolbars();
@@ -4096,6 +4155,7 @@ document.addEventListener('DOMContentLoaded', function () {
     holdings = get(K_HOLD) || holdings;
     quotes = get(K_Q) || quotes;
     fundQuotes = get(K_FQ) || fundQuotes;
+    renderDepotFilterOptions();
     renderTotals();
     renderHoldings();
     renderPies();
@@ -4235,6 +4295,10 @@ document.addEventListener('DOMContentLoaded', function () {
     document.addEventListener('click', (e) => {
       const ub = e.target.closest('[data-unit]'); if (ub) { setUnit(ub.getAttribute('data-unit')); return; }
       const sb = e.target.closest('[data-sort]'); if (sb) { setSort(sb.getAttribute('data-sort')); return; }
+      const db = e.target.closest('[data-dir-toggle]'); if (db) { toggleDir(); return; }
+    });
+    document.addEventListener('change', (e) => {
+      const df = e.target.closest('[data-role="depotfilter"]'); if (df) { setDepotFilter(df.value); return; }
     });
     const prev = $('finCalPrev'), next = $('finCalNext');
     if (prev) prev.addEventListener('click', () => { calMonth.setMonth(calMonth.getMonth() - 1); renderCalendar(); });
