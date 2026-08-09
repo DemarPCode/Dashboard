@@ -2148,12 +2148,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   <div class="fin-card" id="aiSetup" hidden>
     <div class="fin-h">Ikke aktiveret</div>
     <div class="fin-note" style="margin-top:0">
-      AI-assistenten kan <b>søge på nettet</b> og give råd ud fra din portefølje. Den er slået fra indtil du tilføjer en <b>Anthropic API-nøgle</b>.<br><br>
-      <b>Sådan slår du den til:</b><br>
-      1. Opret en nøgle på <b>console.anthropic.com</b><br>
-      2. I Vercel → dit projekt → Settings → Environment Variables: tilføj <b>ANTHROPIC_API_KEY</b><br>
-      3. Redeploy — så er assistenten aktiv.<br><br>
-      ⚠️ Hver besked koster et lille beløb (API-forbrug). Indtil du selv gør det, bruges der <b>ingen penge</b>.
+      AI-assistenten kan <b>søge på nettet</b> og give råd ud fra din portefølje. Den er slået fra indtil du tilføjer en API-nøgle.<br><br>
+      <b>✅ Gratis (anbefalet) — Google Gemini:</b><br>
+      1. Hent en gratis nøgle på <b>aistudio.google.com/app/apikey</b><br>
+      2. I Vercel → dit projekt → Settings → Environment Variables: tilføj <b>GEMINI_API_KEY</b><br>
+      3. Redeploy — så er assistenten aktiv, helt gratis (med rate-limits).<br><br>
+      <b>Alternativt (betalt) — Anthropic Claude:</b> tilføj <b>ANTHROPIC_API_KEY</b> i stedet (koster lidt pr. besked).<br><br>
+      🔒 Gratis-niveauet hos Google kan bruge dine beskeder til at forbedre deres modeller — undgå at dele følsomme personoplysninger. Indtil du selv tilføjer en nøgle, bruges der <b>ingen penge</b> og sendes intet.
     </div>
   </div>
 
