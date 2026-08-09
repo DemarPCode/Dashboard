@@ -2199,14 +2199,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     <span class="bot-tab-icon">🔁</span>
     <span class="bot-tab-label">Abonnementer</span>
   </button>
-  <button class="bot-tab" data-tab="incoming">
-    <span class="bot-tab-icon">📦</span>
-    <span class="bot-tab-label">Ordrer</span>
-  </button>
-  <button class="bot-tab" data-tab="wish">
-    <span class="bot-tab-icon">🎯</span>
-    <span class="bot-tab-label">Ønskeliste</span>
-  </button>
 </nav>
 
 <script>
@@ -2256,7 +2248,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
   tabs.forEach(b => b.addEventListener('click', () => setActiveTab(b.dataset.tab)));
   const savedTab = storeGet(TAB_KEY);
-  setActiveTab(savedTab && ['net','port','accounts','tax','ai','subs','incoming','wish'].includes(savedTab) ? savedTab : 'net');
+  setActiveTab(savedTab && ['net','port','accounts','tax','ai','subs'].includes(savedTab) ? savedTab : 'net');
 
   // ============================================================
   // NET WORTH (copied from the main dashboard, verbatim logic)
