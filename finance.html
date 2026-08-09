@@ -1740,7 +1740,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       <div>
         <div class="fin-h" style="margin-bottom:6px">🧾 Skat i år</div>
         <div class="fin-hero-val" style="font-size:26px" id="taxTotal">DKK 0</div>
-        <div class="fin-hero-sub" id="taxSub">Tryk for at indtaste dine tal</div>
+        <div class="fin-tax-mini-row">
+          <div class="fin-tax-mini"><span class="fin-tax-mini-l">Aktiedepot</span><span class="fin-tax-mini-v" id="taxAktMini">0 kr</span></div>
+          <div class="fin-tax-mini"><span class="fin-tax-mini-l">Aktiesparekonto</span><span class="fin-tax-mini-v" id="taxAskMini">0 kr</span></div>
+        </div>
+        <div class="fin-hero-sub" id="taxSub" style="margin-top:8px">Tryk for at indtaste dine tal</div>
       </div>
       <span class="fin-tax-chevron">⌄</span>
     </button>
@@ -2008,6 +2012,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .fin-tax-detail[hidden] { display: none; }
 .fin-subsection { padding-top: 16px; margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); }
 .fin-subsection:first-child { padding-top: 0; margin-top: 0; border-top: none; }
+.fin-tax-mini-row { display: flex; gap: 20px; margin-top: 10px; }
+.fin-tax-mini { display: flex; flex-direction: column; gap: 3px; }
+.fin-tax-mini-l { font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); }
+.fin-tax-mini-v { font-size: 15px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
 
 /* AI advisor */
 .fin-chat { display: flex; flex-direction: column; gap: 10px; min-height: 240px; }
@@ -4250,6 +4258,8 @@ document.addEventListener('DOMContentLoaded', function () {
   function render() {
     const c = compute();
     $('taxTotal').textContent = fmtDKK(c.totalTax);
+    $('taxAktMini').textContent = Math.round(c.aktTax).toLocaleString('da-DK') + ' kr';
+    $('taxAskMini').textContent = Math.round(c.askTax).toLocaleString('da-DK') + ' kr';
     $('taxSub').textContent = c.totalTax > 0 || c.sales.length || c.askStart
       ? 'Tryk for detaljer og indtastning'
       : 'Tryk for at indtaste dine tal';
